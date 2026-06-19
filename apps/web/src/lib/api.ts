@@ -46,6 +46,13 @@ export const api = {
     my: () => request<Task[]>('/tasks/my'),
     get: (id: string) => request<Task>(`/tasks/${id}`),
   },
+  executor: {
+    register: (formData: FormData) =>
+      request('/executor/register', { method: 'POST', body: formData }),
+    me: () => request('/executor/me'),
+    plans: (categoryId: string) =>
+      request<Plan[]>(`/executor/plans?categoryId=${categoryId}`),
+  },
 };
 
 export interface Category {
@@ -54,6 +61,14 @@ export interface Category {
   nameRu: string;
   executorCount: number;
   subscriptionPriceUzs: number;
+}
+
+export interface Plan {
+  id: string;
+  label: string;
+  bids: number | null;
+  days: number;
+  priceUzs: number;
 }
 
 export interface Task {
