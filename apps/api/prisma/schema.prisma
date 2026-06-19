@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  executor
+  admin
+}
+
+enum ExecutorBadge {
+  registered
+  verified
+  top_master
+  pro
+}
+
+enum SubscriptionPlan {
+  base_25
+  base_50
+  base_100
+  unlimited_15
+  unlimited_30
+  unlimited_90
+}
+
+enum PaymentMethod {
+  safe_deal
+  direct
+  b2b
+}
+
+enum TaskStatus {
+  draft
+  published
+  bids_received
+  executor_selected
+  payment_confirmed
+  in_progress
+  completion_requested
+  completed
+  disputed
+  cancelled
+  expired
+}
+
+enum BidStatus {
+  pending
+  accepted
+  declined
+  withdrawn
+}
+
+enum PaymentProvider {
+  payme
+  click
+  uzcard
+  humo
+  cash
+}
+
+enum PaymentStatus {
+  pending
+  held
+  released
+  refunded
+  disputed
+}
+
+enum DisputeStatus {
+  open
+  under_review
+  resolved_customer
+  resolved_executor
+  resolved_split
+}
+
+model User {
+  id               String   @id @default(uuid())
+  phone            String   @unique
+  email            String?
+  fullName         String?  @map("full_name")
+  avatarUrl        String?  @map("avatar_url")
+  role             UserRole @default(customer)
+  telegramChatId   BigInt?  @map("telegram_chat_id")
+  isPhoneVerified  Boolean  @default(false) @map("is_phone_verified")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  executorProfile  ExecutorProfile?
+  tasksAsCustomer  Task[]           @relation("CustomerTasks")
+  reviewsGiven     Review[]         @relation("ReviewsGiven")
+  reviewsReceived  Review[]         @relation("ReviewsReceived")
+  messagesSent     Message[]
+  paymentsAsPayer  Payment[]        @relation("Payer")
+  paymentsAsPayee  Payment[]        @relation("Payee")
+  disputesOpened   Dispute[]
+
+  @@map("users")
+}
+
+model ExecutorProfile {
+  id                   String        @id @default(uuid())
+  userId               String        @unique @map("user_id")
+  bio                  String?
+  dateOfBirth          DateTime?     @map("date_of_birth") @db.Date
+  city                 String?
+  idVerified           Boolean       @default(false) @map("id_verified")
+  rating               Decimal       @default(0) @db.Decimal(3, 2)
+  reviewCount          Int           @default(0) @map("review_count")
+  completedTaskCount   Int           @default(0) @map("completed_task_count")
+  avgResponseMinutes   Int?          @map("avg_response_minutes")
+  badge                ExecutorBadge @default(registered)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+  bids          Bid[]
+  tasksSelected Task[]         @relation("SelectedExecutor")
+
+  @@map("executor_profiles")
+}
+
+model Category {
+  id                    String     @id @default(uuid())
+  nameUz                String     @map("name_uz")
+  nameRu                String     @map("name_ru")
+  parentId              String?    @map("parent_id")
+  subscriptionPriceUzs  BigInt     @default(0) @map("subscription_price_uzs")
+  isActive              Boolean    @default(true) @map("is_active")
+  sortOrder             Int        @default(0) @map("sort_order")
+
+  parent        Category?      @relation("CategoryChildren", fields: [parentId], references: [id])
+  children      Category[]     @relation("CategoryChildren")
+  subscriptions Subscription[]
+  tasks         Task[]
+
+  @@map("categories")
+}
+
+model Subscription {
+  id          String           @id @default(uuid())
+  executorId  String           @map("executor_id")
+  categoryId  String           @map("category_id")
+  planType    SubscriptionPlan @map("plan_type")
+  bidsTotal   Int              @map("bids_total")
+  bidsUsed    Int              @default(0) @map("bids_used")
+  priceUzs    BigInt           @map("price_uzs")
+  startsAt    DateTime         @map("starts_at")
+  expiresAt   DateTime         @map("expires_at")
+  isActive    Boolean          @default(true) @map("is_active")
+
+  executor ExecutorProfile @relation(fields: [executorId], references: [id], onDelete: Cascade)
+  category Category        @relation(fields: [categoryId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model Task {
+  id                 String        @id @default(uuid())
+  customerId         String        @map("customer_id")
+  categoryId         String        @map("category_id")
+  title              String        @db.VarChar(500)
+  description        String?
+  addressA           String?       @map("address_a")
+  addressB           String?       @map("address_b")
+  latA               Decimal?      @map("lat_a") @db.Decimal(10, 7)
+  lngA               Decimal?      @map("lng_a") @db.Decimal(10, 7)
+  isRemote           Boolean       @default(false) @map("is_remote")
+  startAt            DateTime      @map("start_at")
+  budgetUzs          BigInt?       @map("budget_uzs")
+  paymentMethod      PaymentMethod @default(direct) @map("payment_method")
+  status             TaskStatus    @default(draft)
+  selectedExecutorId String?       @map("selected_executor_id")
+  privateInfo        String?       @map("private_info")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  customer         User             @relation("CustomerTasks", fields: [customerId], references: [id])
+  category         Category         @relation(fields: [categoryId], references: [id])
+  selectedExecutor ExecutorProfile? @relation("SelectedExecutor", fields: [selectedExecutorId], references: [id])
+  bids             Bid[]
+  payments         Payment[]
+  reviews          Review[]
+  messages         Message[]
+  disputes         Dispute[]
+
+  @@map("tasks")
+}
+
+model Bid {
+  id                    String    @id @default(uuid())
+  taskId                String    @map("task_id")
+  executorId            String    @map("executor_id")
+  priceUzs              BigInt    @map("price_uzs")
+  message               String?
+  estimatedDurationMins Int?      @map("estimated_duration_minutes")
+  availableFrom         DateTime? @map("available_from")
+  status                BidStatus @default(pending)
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  task     Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  executor ExecutorProfile @relation(fields: [executorId], references: [id])
+
+  @@map("bids")
+}
+
+model Payment {
+  id                    String          @id @default(uuid())
+  taskId                String          @map("task_id")
+  payerId               String          @map("payer_id")
+  payeeId               String          @map("payee_id")
+  amountUzs             BigInt          @map("amount_uzs")
+  commissionUzs         BigInt          @default(0) @map("commission_uzs")
+  paymentMethod         PaymentProvider @map("payment_method")
+  externalTransactionId String?         @map("external_transaction_id")
+  status                PaymentStatus   @default(pending)
+  createdAt             DateTime        @default(now()) @map("created_at")
+
+  task  Task @relation(fields: [taskId], references: [id])
+  payer User @relation("Payer", fields: [payerId], references: [id])
+  payee User @relation("Payee", fields: [payeeId], references: [id])
+
+  @@map("payments")
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  taskId        String   @map("task_id")
+  reviewerId    String   @map("reviewer_id")
+  revieweeId    String   @map("reviewee_id")
+  rating        Int
+  text          String?
+  executorReply String?  @map("executor_reply")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  task     Task @relation(fields: [taskId], references: [id])
+  reviewer User @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee User @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@map("reviews")
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  taskId        String   @map("task_id")
+  senderId      String   @map("sender_id")
+  content       String?
+  attachmentUrl String?  @map("attachment_url")
+  isRead        Boolean  @default(false) @map("is_read")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Dispute {
+  id         String        @id @default(uuid())
+  taskId     String        @map("task_id")
+  openedById String        @map("opened_by")
+  reason     String
+  status     DisputeStatus @default(open)
+  adminNotes String?       @map("admin_notes")
+  resolvedAt DateTime?     @map("resolved_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  task     Task @relation(fields: [taskId], references: [id])
+  openedBy User @relation(fields: [openedById], references: [id])
+
+  @@map("disputes")
+}
