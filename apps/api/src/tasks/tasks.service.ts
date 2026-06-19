@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   forwardRef,
@@ -157,6 +158,30 @@ export class TasksService {
 
     if (!task) throw new NotFoundException('Vazifa topilmadi');
     return this.serialize(task);
+  }
+
+  async complete(customerId: string, taskId: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: { selectedExecutor: true },
+    });
+    if (!task) throw new NotFoundException('Vazifa topilmadi');
+    if (task.customerId !== customerId) throw new ForbiddenException();
+    if (task.status !== 'in_progress') {
+      throw new BadRequestException('Vazifa hali jarayonda emas');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.task.update({ where: { id: taskId }, data: { status: 'completed' } }),
+      ...(task.selectedExecutorId
+        ? [this.prisma.executorProfile.update({
+            where: { id: task.selectedExecutorId },
+            data: { completedTaskCount: { increment: 1 } },
+          })]
+        : []),
+    ]);
+
+    return { success: true };
   }
 
   async findByCustomer(customerId: string) {

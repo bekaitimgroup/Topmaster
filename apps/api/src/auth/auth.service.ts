@@ -54,6 +54,10 @@ export class AuthService {
     let isNewUser = false;
     let user = await this.prisma.user.findUnique({ where: { phone } });
 
+    if (user && !user.isActive) {
+      throw new HttpException('Hisobingiz bloklangan', HttpStatus.FORBIDDEN);
+    }
+
     if (!user) {
       user = await this.prisma.user.create({
         data: { phone, role, isPhoneVerified: true },

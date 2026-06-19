@@ -8,6 +8,12 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ExecutorModule } from './executor/executor.module';
+import { BidsModule } from './bids/bids.module';
+import { MessagesModule } from './messages/messages.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { AdminModule } from './admin/admin.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -22,6 +28,12 @@ import { ExecutorModule } from './executor/executor.module';
     CategoriesModule,
     TasksModule,
     ExecutorModule,
+    BidsModule,
+    MessagesModule,
+    PaymentsModule,
+    ReviewsModule,
+    AdminModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}

@@ -90,13 +90,15 @@ model User {
   role             UserRole @default(customer)
   telegramChatId   BigInt?  @map("telegram_chat_id")
   isPhoneVerified  Boolean  @default(false) @map("is_phone_verified")
+  isActive         Boolean  @default(true) @map("is_active")
   createdAt        DateTime @default(now()) @map("created_at")
 
   executorProfile  ExecutorProfile?
   tasksAsCustomer  Task[]           @relation("CustomerTasks")
   reviewsGiven     Review[]         @relation("ReviewsGiven")
   reviewsReceived  Review[]         @relation("ReviewsReceived")
-  messagesSent     Message[]
+  messagesSent     Message[]        @relation("MessagesSent")
+  messagesReceived Message[]        @relation("MessagesReceived")
   paymentsAsPayer  Payment[]        @relation("Payer")
   paymentsAsPayee  Payment[]        @relation("Payee")
   disputesOpened   Dispute[]
@@ -156,6 +158,7 @@ model Subscription {
 
   executor ExecutorProfile @relation(fields: [executorId], references: [id], onDelete: Cascade)
   category Category        @relation(fields: [categoryId], references: [id])
+  payments Payment[]
 
   @@map("subscriptions")
 }
@@ -211,7 +214,8 @@ model Bid {
 
 model Payment {
   id                    String          @id @default(uuid())
-  taskId                String          @map("task_id")
+  taskId                String?         @map("task_id")
+  subscriptionId        String?         @map("subscription_id")
   payerId               String          @map("payer_id")
   payeeId               String          @map("payee_id")
   amountUzs             BigInt          @map("amount_uzs")
@@ -221,9 +225,10 @@ model Payment {
   status                PaymentStatus   @default(pending)
   createdAt             DateTime        @default(now()) @map("created_at")
 
-  task  Task @relation(fields: [taskId], references: [id])
-  payer User @relation("Payer", fields: [payerId], references: [id])
-  payee User @relation("Payee", fields: [payeeId], references: [id])
+  task         Task?         @relation(fields: [taskId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  payer        User          @relation("Payer", fields: [payerId], references: [id])
+  payee        User          @relation("Payee", fields: [payeeId], references: [id])
 
   @@map("payments")
 }
@@ -249,13 +254,15 @@ model Message {
   id            String   @id @default(uuid())
   taskId        String   @map("task_id")
   senderId      String   @map("sender_id")
+  recipientId   String   @map("recipient_id")
   content       String?
   attachmentUrl String?  @map("attachment_url")
   isRead        Boolean  @default(false) @map("is_read")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id])
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sender    User @relation("MessagesSent", fields: [senderId], references: [id])
+  recipient User @relation("MessagesReceived", fields: [recipientId], references: [id])
 
   @@map("messages")
 }

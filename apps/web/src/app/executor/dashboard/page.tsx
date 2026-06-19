@@ -18,7 +18,13 @@ export default function ExecutorDashboard() {
             <p className="text-xs text-zinc-400">topmaster.uz</p>
             <h1 className="font-bold text-zinc-900">Vazifalar tasması</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/executor/subscriptions"
+              className="text-xs font-medium px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+            >
+              Obuna
+            </Link>
             <Link
               href="/executor/profile"
               className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:bg-zinc-200 transition-colors"

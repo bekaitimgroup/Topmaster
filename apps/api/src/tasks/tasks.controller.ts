@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -68,5 +69,10 @@ export class TasksController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tasks.findOne(id);
+  }
+
+  @Patch(':id/complete')
+  complete(@Param('id') id: string, @Request() req: any) {
+    return this.tasks.complete(req.user.id, id);
   }
 }
