@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Request,
   UploadedFiles,
   UseGuards,
@@ -41,13 +42,31 @@ export class TasksController {
     return this.tasks.create(req.user.id, dto, photoUrls);
   }
 
+  @Get('feed')
+  getFeed(
+    @Request() req: any,
+    @Query('categoryId') categoryId?: string,
+    @Query('district') district?: string,
+    @Query('budgetMin') budgetMin?: string,
+    @Query('budgetMax') budgetMax?: string,
+    @Query('page') page?: string,
+  ) {
+    return this.tasks.getFeed(req.user.id, {
+      categoryId,
+      district,
+      budgetMin: budgetMin ? Number(budgetMin) : undefined,
+      budgetMax: budgetMax ? Number(budgetMax) : undefined,
+      page: page ? Number(page) : 1,
+    });
+  }
+
   @Get('my')
   myTasks(@Request() req: any) {
     return this.tasks.findByCustomer(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req: any) {
-    return this.tasks.findOne(id, req.user.id);
+  findOne(@Param('id') id: string) {
+    return this.tasks.findOne(id);
   }
 }
