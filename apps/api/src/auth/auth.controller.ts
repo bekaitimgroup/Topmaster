@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: 'strict' as const,
+  path: '/',
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+};
 
 @Controller('auth')
 export class AuthController {
@@ -14,8 +25,21 @@ export class AuthController {
   }
 
   @Post('verify-otp')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.auth.verifyOtp(dto.phone, dto.code, dto.role);
+  async verifyOtp(
+    @Body() dto: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.verifyOtp(dto.phone, dto.code, dto.role);
+    // Set token as httpOnly cookie — JS cannot read it
+    res.cookie('token', result.accessToken, COOKIE_OPTIONS);
+    // Return without the token so it never touches the client JS
+    return { isNewUser: result.isNewUser };
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token', { path: '/' });
+    return { success: true };
   }
 
   @UseGuards(JwtAuthGuard)

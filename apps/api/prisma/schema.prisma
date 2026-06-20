@@ -163,6 +163,31 @@ model Subscription {
   @@map("subscriptions")
 }
 
+model CarMake {
+  id        String     @id @default(uuid())
+  name      String
+  isLocal   Boolean    @default(false) @map("is_local")
+  sortOrder Int        @default(0) @map("sort_order")
+  models    CarModel[]
+  tasks     Task[]
+
+  @@map("car_makes")
+}
+
+model CarModel {
+  id        String   @id @default(uuid())
+  makeId    String   @map("make_id")
+  name      String
+  yearFrom  Int?     @map("year_from")
+  yearTo    Int?     @map("year_to")
+  sortOrder Int      @default(0) @map("sort_order")
+
+  make  CarMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("car_models")
+}
+
 model Task {
   id                 String        @id @default(uuid())
   customerId         String        @map("customer_id")
@@ -180,12 +205,17 @@ model Task {
   status             TaskStatus    @default(draft)
   selectedExecutorId String?       @map("selected_executor_id")
   privateInfo        String?       @map("private_info")
+  carMakeId          String?       @map("car_make_id")
+  carModelId         String?       @map("car_model_id")
+  carYear            Int?          @map("car_year")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
 
   customer         User             @relation("CustomerTasks", fields: [customerId], references: [id])
   category         Category         @relation(fields: [categoryId], references: [id])
   selectedExecutor ExecutorProfile? @relation("SelectedExecutor", fields: [selectedExecutorId], references: [id])
+  carMake          CarMake?         @relation(fields: [carMakeId], references: [id])
+  carModel         CarModel?        @relation(fields: [carModelId], references: [id])
   bids             Bid[]
   payments         Payment[]
   reviews          Review[]

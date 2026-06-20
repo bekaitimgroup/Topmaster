@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   value: { bio: string; experienceYears: string };
@@ -7,64 +8,56 @@ interface Props {
   onBack: () => void;
 }
 
-const YEARS = ['1 yildan kam', '1–2', '3–5', '5–10', '10+'];
-
 export default function Step3Skills({ value, onChange, onNext, onBack }: Props) {
+  const { t } = useLanguage();
+  const s = t.onboarding.step3;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Ko'nikmalar</h2>
-        <p className="text-sm text-zinc-500">
-          Yaxshi tavsif yozgan ustalar 3x ko'p buyurtma oladi
-        </p>
+        <h2 className="text-2xl font-extrabold text-[#0D0D1A] mb-1">{s.title}</h2>
+        <p className="text-sm text-zinc-500">{s.subtitle}</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">
-          O'zingiz haqingizda <span className="text-zinc-400 font-normal">(ixtiyoriy)</span>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">
+          {s.bioLabel} <span className="text-zinc-400 font-normal">({t.common.optional})</span>
         </label>
-        <textarea
-          value={value.bio}
+        <textarea value={value.bio}
           onChange={(e) => onChange({ ...value, bio: e.target.value })}
-          rows={5}
-          maxLength={1000}
-          placeholder="Masalan: 8 yillik tajribali elektrik ustaman. Toshkentning barcha tumanlarida ishlayman. Sifat va muddatga kafolat beraman..."
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
+          rows={5} maxLength={1000} placeholder={s.bioPlaceholder}
+          className="w-full rounded-2xl border-2 border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 resize-none" />
         <p className="text-xs text-zinc-400 mt-1">{value.bio.length}/1000</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Tajriba</label>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-3">{s.expLabel}</label>
         <div className="flex flex-wrap gap-2">
-          {YEARS.map((y, i) => (
-            <button
-              key={y}
-              onClick={() => onChange({ ...value, experienceYears: String(i === 0 ? 0 : i === 4 ? 10 : parseInt(y)) })}
-              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                value.experienceYears === String(i === 0 ? 0 : i === 4 ? 10 : parseInt(y))
-                  ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
-                  : 'border-zinc-200 hover:border-zinc-300'
-              }`}
-            >
-              {y} yil
-            </button>
-          ))}
+          {s.expOptions.map((opt, i) => {
+            const val = String(i === 0 ? 0 : i === s.expOptions.length - 1 ? 10 : i);
+            return (
+              <button key={opt} onClick={() => onChange({ ...value, experienceYears: val })}
+                className={`px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
+                  value.experienceYears === val
+                    ? 'border-[#7C3AED] bg-[#F5F3FF] text-[#5B21B6]'
+                    : 'border-zinc-200 hover:border-[#A78BFA] text-zinc-600'
+                }`}>
+                {opt}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 py-3.5 rounded-xl border border-zinc-200 font-medium text-sm hover:bg-zinc-50 transition-colors"
-        >
-          Orqaga
+        <button onClick={onBack}
+          className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
+          {t.common.back}
         </button>
-        <button
-          onClick={onNext}
-          className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-        >
-          Davom etish
+        <button onClick={onNext}
+          className="flex-1 py-4 rounded-2xl text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+          {t.common.next}
         </button>
       </div>
     </div>

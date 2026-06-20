@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,10 +10,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { UserRole, ExecutorBadge } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
 import { AdminService } from './admin.service';
 import { UpsertCategoryDto } from './dto/upsert-category.dto';
+
+const ALLOWED_ROLES  = new Set<string>(Object.values(UserRole));
+const ALLOWED_BADGES = new Set<string>(Object.values(ExecutorBadge));
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -49,7 +54,9 @@ export class AdminController {
   // Users
   @Get('users')
   getUsers(@Query('page') page?: string, @Query('search') search?: string) {
-    return this.admin.getUsers(page ? Number(page) : 1, search);
+    const safePage = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+    const safeSearch = search ? search.slice(0, 100) : undefined;
+    return this.admin.getUsers(safePage, safeSearch);
   }
 
   @Patch('users/:id/active')
@@ -59,12 +66,14 @@ export class AdminController {
 
   @Patch('users/:id/role')
   setRole(@Param('id') id: string, @Body('role') role: string) {
-    return this.admin.setUserRole(id, role);
+    if (!ALLOWED_ROLES.has(role)) throw new BadRequestException('Invalid role');
+    return this.admin.setUserRole(id, role as UserRole);
   }
 
   @Patch('users/:id/badge')
   setBadge(@Param('id') id: string, @Body('badge') badge: string) {
-    return this.admin.setExecutorBadge(id, badge);
+    if (!ALLOWED_BADGES.has(badge)) throw new BadRequestException('Invalid badge');
+    return this.admin.setExecutorBadge(id, badge as ExecutorBadge);
   }
 
   // Disputes

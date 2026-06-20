@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api, Category } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   value: string[];
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export default function Step2Categories({ value, onChange, onNext, onBack, onCategoriesLoaded }: Props) {
+  const { t } = useLanguage();
+  const s = t.onboarding.step2;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +37,8 @@ export default function Step2Categories({ value, onChange, onNext, onBack, onCat
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Kategoriyalar</h2>
-        <p className="text-sm text-zinc-500">
-          1 dan 3 tagacha tanlang. Har bir kategoriya alohida obuna talab qiladi.
-        </p>
+        <h2 className="text-2xl font-extrabold text-[#0D0D1A] mb-1">{s.title}</h2>
+        <p className="text-sm text-zinc-500">{s.subtitle}</p>
       </div>
 
       {loading ? (
@@ -52,29 +53,19 @@ export default function Step2Categories({ value, onChange, onNext, onBack, onCat
             const selected = value.includes(cat.id);
             const disabled = !selected && value.length >= 3;
             return (
-              <button
-                key={cat.id}
-                onClick={() => toggle(cat.id)}
-                disabled={disabled}
-                className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                  selected
-                    ? 'border-blue-600 bg-blue-50'
-                    : disabled
-                    ? 'border-zinc-100 opacity-40 cursor-not-allowed'
-                    : 'border-zinc-200 hover:border-zinc-300'
-                }`}
-              >
+              <button key={cat.id} onClick={() => toggle(cat.id)} disabled={disabled}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 text-left transition-all ${
+                  selected ? 'border-[#7C3AED] bg-[#F5F3FF]'
+                  : disabled ? 'border-zinc-100 opacity-40 cursor-not-allowed'
+                  : 'border-zinc-200 hover:border-[#A78BFA]'
+                }`}>
                 <div>
-                  <p className="font-medium text-sm">{cat.nameUz}</p>
+                  <p className="font-semibold text-sm text-[#0D0D1A]">{cat.nameUz}</p>
                   <p className="text-xs text-zinc-400">{cat.nameRu}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-zinc-500">
-                    {cat.subscriptionPriceUzs.toLocaleString()} so'm/oy
-                  </p>
-                  {selected && (
-                    <span className="text-xs text-blue-600 font-medium">✓ Tanlandi</span>
-                  )}
+                  <p className="text-xs text-zinc-500">{cat.subscriptionPriceUzs.toLocaleString()} {t.currency}/{s.perMonth}</p>
+                  {selected && <span className="text-xs text-[#7C3AED] font-bold">{s.selected}</span>}
                 </div>
               </button>
             );
@@ -83,24 +74,18 @@ export default function Step2Categories({ value, onChange, onNext, onBack, onCat
       )}
 
       {value.length > 0 && (
-        <p className="text-sm text-zinc-500 text-center">
-          {value.length}/3 kategoriya tanlandi
-        </p>
+        <p className="text-sm text-zinc-500 text-center">{value.length}/3 {s.selectedCount}</p>
       )}
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 py-3.5 rounded-xl border border-zinc-200 font-medium text-sm hover:bg-zinc-50 transition-colors"
-        >
-          Orqaga
+        <button onClick={onBack}
+          className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
+          {t.common.back}
         </button>
-        <button
-          disabled={!canNext}
-          onClick={onNext}
-          className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-        >
-          Davom etish
+        <button disabled={!canNext} onClick={onNext}
+          className="flex-1 py-4 rounded-2xl text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+          {t.common.next}
         </button>
       </div>
     </div>

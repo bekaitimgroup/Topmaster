@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Brand */
+  --color-brand:        #7C3AED;
+  --color-brand-light:  #A78BFA;
+  --color-brand-dark:   #5B21B6;
+  --color-gold:         #F59E0B;
+  --color-gold-light:   #FCD34D;
+
+  /* Dark surfaces */
+  --color-dark:         #0B0B18;
+  --color-dark-2:       #13132A;
+  --color-dark-3:       #1A1A3A;
+
+  /* Neutral */
+  --color-off-white:    #F8F7FF;
+  --color-ink:          #0D0D1A;
+  --color-muted:        #71717A;
+
+  /* Font */
+  --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta);
+  color: #0D0D1A;
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #A78BFA 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero dark bg with radial violet glow */
+.hero-bg {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(91, 33, 182, 0.55) 0%, transparent 65%),
+    linear-gradient(180deg, #0B0B18 0%, #0D0D2A 100%);
+}
+
+/* Glow */
+.glow-violet { box-shadow: 0 0 48px 0 rgba(124, 58, 237, 0.4); }
+.glow-gold   { box-shadow: 0 0 32px 0 rgba(245, 158, 11, 0.45); }
+
+/* Glass card (on dark bg) */
+.glass {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(14px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
 }

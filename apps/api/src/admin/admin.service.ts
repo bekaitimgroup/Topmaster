@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ExecutorBadge, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertCategoryDto } from './dto/upsert-category.dto';
 
@@ -132,17 +133,17 @@ export class AdminService {
     return { success: true };
   }
 
-  async setUserRole(id: string, role: string) {
+  async setUserRole(id: string, role: UserRole) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException();
-    await this.prisma.user.update({ where: { id }, data: { role: role as any } });
+    await this.prisma.user.update({ where: { id }, data: { role } });
     return { success: true };
   }
 
-  async setExecutorBadge(userId: string, badge: string) {
+  async setExecutorBadge(userId: string, badge: ExecutorBadge) {
     const profile = await this.prisma.executorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Usta profili topilmadi');
-    await this.prisma.executorProfile.update({ where: { userId }, data: { badge: badge as any } });
+    await this.prisma.executorProfile.update({ where: { userId }, data: { badge } });
     return { success: true };
   }
 

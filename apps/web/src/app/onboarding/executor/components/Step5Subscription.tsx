@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Plan {
   id: string;
@@ -26,72 +27,54 @@ const PLANS: Plan[] = [
 ];
 
 export default function Step5Subscription({ categoryNames, onActivate, onBack, loading, error }: Props) {
+  const { t } = useLanguage();
+  const s = t.onboarding.step5;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Obuna & faollashtirish</h2>
-        <p className="text-sm text-zinc-500">
-          Hozir bepul boshlang — 90 kun cheksiz takliflar
-        </p>
+        <h2 className="text-2xl font-extrabold text-[#0D0D1A] mb-1">{s.title}</h2>
+        <p className="text-sm text-zinc-500">{s.subtitle}</p>
       </div>
 
-      {/* Free trial CTA — primary action */}
-      <div className="rounded-2xl border-2 border-blue-600 bg-blue-50 p-5">
+      <div className="rounded-2xl border-2 border-[#7C3AED] bg-[#F5F3FF] p-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-bold text-blue-700 text-lg">90 kun BEPUL</span>
-          <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-            Tavsiya etiladi
-          </span>
+          <span className="font-extrabold text-[#5B21B6] text-lg">{s.freeTrial}</span>
+          <span className="bg-[#7C3AED] text-white text-xs font-bold px-2.5 py-1 rounded-full">{s.recommended}</span>
         </div>
-        <p className="text-sm text-blue-800 mb-1">Cheksiz takliflar · Karta shart emas</p>
-        <p className="text-xs text-blue-600">
-          Kategoriyalar: {categoryNames.join(', ')}
-        </p>
+        <p className="text-sm text-[#4C1D95] mb-1">{s.freeTrialDesc}</p>
+        <p className="text-xs text-[#7C3AED]">{s.categories}: {categoryNames.join(', ')}</p>
 
         {error && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>
         )}
 
-        <button
-          onClick={onActivate}
-          disabled={loading}
-          className="mt-4 w-full py-3.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
-        >
-          {loading ? 'Faollashtirilmoqda...' : 'Bepul boshlash →'}
+        <button onClick={onActivate} disabled={loading}
+          className="mt-4 w-full py-4 rounded-2xl text-white font-bold disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+          {loading ? t.common.loading : s.activateBtn}
         </button>
       </div>
 
-      {/* Paid plans preview */}
       <div>
-        <p className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
-          Bepul muddat tugagach — to'lov rejalari
-        </p>
+        <p className="text-xs text-zinc-400 uppercase tracking-wider mb-3">{s.afterTrialLabel}</p>
         <div className="grid grid-cols-2 gap-2">
           {PLANS.map((p) => (
-            <div
-              key={p.id}
-              className="rounded-xl border border-zinc-200 p-3 opacity-60"
-            >
-              <p className="font-semibold text-sm">{p.label}</p>
+            <div key={p.id} className="rounded-2xl border-2 border-zinc-200 p-3 opacity-60">
+              <p className="font-bold text-sm">{p.label}</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                {p.bids ? `${p.bids} taklif` : 'Cheksiz'} · {p.days} kun
+                {p.bids ? `${p.bids} ${s.bids}` : s.unlimited} · {p.days} {s.days}
               </p>
-              <p className="text-sm font-medium mt-1">
-                {p.priceUzs.toLocaleString()} so'm
-              </p>
+              <p className="text-sm font-bold mt-1">{p.priceUzs.toLocaleString()} {t.currency}</p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-zinc-400 mt-2 text-center">
-          To'lov tez orada Payme orqali bo'ladi
-        </p>
+        <p className="text-xs text-zinc-400 mt-2 text-center">{s.paymentNote}</p>
       </div>
 
-      <button
-        onClick={onBack}
-        className="w-full py-3 rounded-xl border border-zinc-200 font-medium text-sm hover:bg-zinc-50 transition-colors"
-      >
-        Orqaga
+      <button onClick={onBack}
+        className="w-full py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm hover:bg-zinc-50 transition-colors">
+        {t.common.back}
       </button>
     </div>
   );

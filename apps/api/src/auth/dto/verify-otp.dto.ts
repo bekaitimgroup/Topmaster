@@ -1,5 +1,10 @@
 import { IsEnum, IsString, Length, Matches } from 'class-validator';
-import { UserRole } from '@prisma/client';
+
+// Only allow public-facing roles — never 'admin' from the client
+export enum PublicRole {
+  customer = 'customer',
+  executor = 'executor',
+}
 
 export class VerifyOtpDto {
   @IsString()
@@ -8,8 +13,9 @@ export class VerifyOtpDto {
 
   @IsString()
   @Length(6, 6, { message: 'OTP must be exactly 6 digits' })
+  @Matches(/^[0-9]{6}$/, { message: 'OTP must contain only digits' })
   code: string;
 
-  @IsEnum(UserRole)
-  role: UserRole;
+  @IsEnum(PublicRole, { message: 'Role must be customer or executor' })
+  role: PublicRole;
 }

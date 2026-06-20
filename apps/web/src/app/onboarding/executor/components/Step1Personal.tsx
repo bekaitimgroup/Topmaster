@@ -1,9 +1,10 @@
 'use client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const DISTRICTS = [
-  'Chilonzor', 'Yunusobod', 'Mirzo Ulug\'bek', 'Shayxontohur',
-  'Uchtepa', 'Olmazor', 'Bektemir', 'Sergeli',
-  'Yakkasaroy', 'Yashnobod', 'Mirobod', 'Hamza',
+  "Chilonzor", "Yunusobod", "Mirzo Ulug'bek", "Shayxontohur",
+  "Uchtepa", "Olmazor", "Bektemir", "Sergeli",
+  "Yakkasaroy", "Yashnobod", "Mirobod", "Hamza",
 ];
 
 interface Props {
@@ -12,78 +13,58 @@ interface Props {
   onNext: () => void;
 }
 
-export default function Step1Personal({ value, onChange, onNext }: Props) {
-  const today = new Date();
-  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-    .toISOString().slice(0, 10);
-  const minDob = new Date(today.getFullYear() - 70, today.getMonth(), today.getDate())
-    .toISOString().slice(0, 10);
+const INPUT_CLS = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 
+export default function Step1Personal({ value, onChange, onNext }: Props) {
+  const { t } = useLanguage();
+  const s = t.onboarding.step1;
+
+  const today = new Date();
+  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().slice(0, 10);
+  const minDob = new Date(today.getFullYear() - 70, today.getMonth(), today.getDate()).toISOString().slice(0, 10);
   const canNext = value.fullName.trim().length >= 2 && value.city && value.dateOfBirth;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Shaxsiy ma'lumotlar</h2>
-        <p className="text-sm text-zinc-500">Mijozlar profilingizni ko'radi</p>
+        <h2 className="text-2xl font-extrabold text-[#0D0D1A] mb-1">{s.title}</h2>
+        <p className="text-sm text-zinc-500">{s.subtitle}</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">To'liq ism</label>
-        <input
-          type="text"
-          value={value.fullName}
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.fullNameLabel}</label>
+        <input type="text" value={value.fullName}
           onChange={(e) => onChange({ ...value, fullName: e.target.value })}
-          placeholder="Ism Familiya"
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          placeholder={s.fullNamePlaceholder} className={INPUT_CLS} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">Shahar / tuman</label>
-        <select
-          value={value.city}
-          onChange={(e) => onChange({ ...value, city: e.target.value })}
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          <option value="">Tumanni tanlang</option>
-          {DISTRICTS.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.cityLabel}</label>
+        <select value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value })} className={INPUT_CLS}>
+          <option value="">{s.cityPlaceholder}</option>
+          {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">Tug'ilgan sana</label>
-        <input
-          type="date"
-          value={value.dateOfBirth}
-          max={maxDob}
-          min={minDob}
-          onChange={(e) => onChange({ ...value, dateOfBirth: e.target.value })}
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.dobLabel}</label>
+        <input type="date" value={value.dateOfBirth} max={maxDob} min={minDob}
+          onChange={(e) => onChange({ ...value, dateOfBirth: e.target.value })} className={INPUT_CLS} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">
-          Email <span className="text-zinc-400 font-normal">(ixtiyoriy)</span>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">
+          {s.emailLabel} <span className="text-zinc-400 font-normal">({t.common.optional})</span>
         </label>
-        <input
-          type="email"
-          value={value.email}
+        <input type="email" value={value.email}
           onChange={(e) => onChange({ ...value, email: e.target.value })}
-          placeholder="email@example.com"
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          placeholder="email@example.com" className={INPUT_CLS} />
       </div>
 
-      <button
-        disabled={!canNext}
-        onClick={onNext}
-        className="w-full py-3.5 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-      >
-        Davom etish
+      <button disabled={!canNext} onClick={onNext}
+        className="w-full py-4 rounded-2xl font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
+        style={{ background: canNext ? 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' : '#E4E4E7', color: canNext ? '#fff' : '#A1A1AA' }}>
+        {t.common.next} →
       </button>
     </div>
   );

@@ -1,17 +1,12 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-function getToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
-}
-
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const res = await fetch(`${BASE}/api${path}`, {
     ...init,
+    // Send httpOnly cookie automatically — no manual token handling
+    credentials: 'include',
     headers: {
       ...(init.headers ?? {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
   if (!res.ok) {
@@ -30,15 +25,20 @@ export const api = {
         body: JSON.stringify({ phone }),
       }),
     verifyOtp: (phone: string, code: string, role: string) =>
-      request<{ accessToken: string; isNewUser: boolean }>('/auth/verify-otp', {
+      request<{ isNewUser: boolean }>('/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, code, role }),
       }),
     me: () => request('/auth/me'),
+    logout: () => request('/auth/logout', { method: 'POST' }),
   },
   categories: {
     list: () => request<Category[]>('/categories'),
+  },
+  cars: {
+    makes: () => request<CarMake[]>('/cars/makes'),
+    models: (makeId: string) => request<CarModel[]>(`/cars/makes/${makeId}/models`),
   },
   tasks: {
     create: (formData: FormData) =>
@@ -55,12 +55,34 @@ export const api = {
   },
 };
 
+export interface SubCategory {
+  id: string;
+  nameUz: string;
+  nameRu: string;
+  sortOrder: number;
+}
+
 export interface Category {
   id: string;
   nameUz: string;
   nameRu: string;
   executorCount: number;
   subscriptionPriceUzs: number;
+  children: SubCategory[];
+}
+
+export interface CarMake {
+  id: string;
+  name: string;
+  isLocal: boolean;
+  sortOrder: number;
+}
+
+export interface CarModel {
+  id: string;
+  name: string;
+  yearFrom: number | null;
+  yearTo: number | null;
 }
 
 export interface Plan {

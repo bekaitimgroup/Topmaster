@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -19,6 +19,9 @@ export class ReviewsController {
     @Request() req: any,
     @Body('reply') reply: string,
   ) {
+    if (typeof reply !== 'string' || reply.length === 0 || reply.length > 2000) {
+      throw new BadRequestException('reply must be a non-empty string under 2000 chars');
+    }
     return this.reviews.replyToReview(req.user.id, id, reply);
   }
 

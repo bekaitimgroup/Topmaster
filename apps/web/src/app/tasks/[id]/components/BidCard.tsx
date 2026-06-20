@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Bid {
   id: string;
@@ -25,16 +26,6 @@ const BADGE_LABELS: Record<string, string> = {
   pro: '⭐',
 };
 
-const DURATION_LABELS: Record<number, string> = {
-  60: '1 soat',
-  120: '2 soat',
-  180: '3 soat',
-  240: '4 soat',
-  480: 'Yarim kun',
-  720: '¾ kun',
-  960: 'Butun kun',
-};
-
 interface Props {
   bid: Bid;
   isCustomer: boolean;
@@ -45,9 +36,14 @@ interface Props {
 }
 
 export default function BidCard({ bid, isCustomer, taskStatus, onAccept, onDecline, onChat }: Props) {
+  const { t } = useLanguage();
+  const bc = t.bidCard;
+
   const canAct = isCustomer && bid.status === 'pending' && taskStatus === 'bids_received';
+
   const durationLabel = bid.estimatedDurationMins
-    ? DURATION_LABELS[bid.estimatedDurationMins] ?? `${bid.estimatedDurationMins} daqiqa`
+    ? (bc.durations as Record<number, string>)[bid.estimatedDurationMins]
+      ?? `${bid.estimatedDurationMins} ${bc.mins}`
     : null;
 
   const statusColors: Record<string, string> = {
@@ -66,61 +62,56 @@ export default function BidCard({ bid, isCustomer, taskStatus, onAccept, onDecli
           </div>
           <div>
             <p className="font-semibold text-sm">
-              {bid.executor.user.fullName ?? 'Usta'}
+              {bid.executor.user.fullName ?? bc.masterDefault}
               {' '}
               <span className="text-base">{BADGE_LABELS[bid.executor.badge]}</span>
             </p>
             <p className="text-xs text-zinc-500">
               {bid.executor.reviewCount > 0
-                ? `★ ${bid.executor.rating.toFixed(1)} · ${bid.executor.reviewCount} izoh`
-                : 'Yangi usta'}
-              {bid.executor.completedTaskCount > 0 && ` · ${bid.executor.completedTaskCount} ta bajarilgan`}
+                ? `★ ${bid.executor.rating.toFixed(1)} · ${bid.executor.reviewCount} ${bc.reviews}`
+                : bc.newMaster}
+              {bid.executor.completedTaskCount > 0 && ` · ${bid.executor.completedTaskCount} ${bc.completed}`}
             </p>
           </div>
         </div>
 
         <div className="text-right shrink-0">
-          <p className="font-bold text-zinc-900">{bid.priceUzs.toLocaleString()} so'm</p>
+          <p className="font-bold text-zinc-900">{bid.priceUzs.toLocaleString()} {t.currency}</p>
           {durationLabel && <p className="text-xs text-zinc-400">{durationLabel}</p>}
         </div>
       </div>
 
       {bid.message && (
-        <p className="mt-3 text-sm text-zinc-700 bg-zinc-50 rounded-xl px-3 py-2">
-          {bid.message}
-        </p>
+        <p className="mt-3 text-sm text-zinc-700 bg-zinc-50 rounded-xl px-3 py-2">{bid.message}</p>
       )}
 
       <div className="mt-3 flex items-center gap-2">
         {bid.status !== 'pending' && (
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[bid.status]}`}>
-            {bid.status === 'accepted' ? 'Qabul qilindi' : bid.status === 'declined' ? 'Rad etildi' : 'Bekor qilindi'}
+            {bid.status === 'accepted' ? bc.accepted
+              : bid.status === 'declined' ? bc.declined
+              : bc.withdrawn}
           </span>
         )}
 
         {canAct && (
           <>
-            <button
-              onClick={() => onAccept?.(bid.id)}
-              className="flex-1 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-            >
-              Qabul qilish
+            <button onClick={() => onAccept?.(bid.id)}
+              className="flex-1 py-2 rounded-xl text-white text-sm font-medium transition-colors"
+              style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+              {bc.accept}
             </button>
-            <button
-              onClick={() => onDecline?.(bid.id)}
-              className="px-4 py-2 rounded-xl border border-zinc-200 text-sm font-medium hover:bg-zinc-50 transition-colors"
-            >
-              Rad etish
+            <button onClick={() => onDecline?.(bid.id)}
+              className="px-4 py-2 rounded-xl border border-zinc-200 text-sm font-medium hover:bg-zinc-50 transition-colors">
+              {bc.decline}
             </button>
           </>
         )}
 
         {(bid.status === 'accepted' || bid.status === 'pending') && (
-          <button
-            onClick={() => onChat?.(bid.executor.userId)}
-            className="ml-auto px-3 py-2 rounded-xl border border-zinc-200 text-sm text-blue-600 hover:bg-blue-50 transition-colors"
-          >
-            💬 Yozish
+          <button onClick={() => onChat?.(bid.executor.userId)}
+            className="ml-auto px-3 py-2 rounded-xl border border-zinc-200 text-sm text-[#7C3AED] hover:bg-[#F5F3FF] transition-colors">
+            💬 {bc.chat}
           </button>
         )}
       </div>

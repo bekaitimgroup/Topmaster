@@ -1,4 +1,4 @@
-import { IsISO8601, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsISO8601, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBidDto {
@@ -12,6 +12,7 @@ export class CreateBidDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   message?: string;
 
   @IsOptional()

@@ -24,25 +24,22 @@ export function useChat(taskId: string, partnerId: string) {
   // Load history
   useEffect(() => {
     if (!taskId || !partnerId) return;
-    const token = localStorage.getItem('token');
     fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/messages/task/${taskId}/partner/${partnerId}`,
-      { headers: { Authorization: `Bearer ${token}` } },
+      { credentials: 'include' },
     )
       .then((r) => r.json())
       .then((msgs) => setMessages(Array.isArray(msgs) ? msgs : []))
       .finally(() => setLoading(false));
   }, [taskId, partnerId]);
 
-  // Socket connection
+  // Socket connection — browser sends httpOnly cookie automatically via withCredentials
   useEffect(() => {
     if (!taskId || !partnerId) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
 
     const socket = io(
       `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/chat`,
-      { auth: { token }, transports: ['websocket'] },
+      { withCredentials: true, transports: ['websocket'] },
     );
     socketRef.current = socket;
 

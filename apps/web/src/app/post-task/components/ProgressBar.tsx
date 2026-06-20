@@ -1,27 +1,29 @@
 'use client';
-
-const STEPS = [
-  { n: 1, label: 'Kategoriya' },
-  { n: 2, label: 'Manzil' },
-  { n: 3, label: 'Vaqt' },
-  { n: 4, label: 'Tafsilotlar' },
-  { n: 5, label: 'Narx' },
-  { n: 6, label: 'Tekshirish' },
-];
-const PCT = [0, 17, 33, 50, 67, 83, 100];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ProgressBar({ step }: { step: number }) {
+  const { t } = useLanguage();
+  const steps = t.postTask.steps;
+
   return (
     <div className="w-full">
-      <div className="flex justify-between text-xs text-zinc-500 mb-1">
-        <span>{STEPS[step - 1]?.label}</span>
-        <span>{PCT[step]}%</span>
+      <div className="flex gap-1.5">
+        {steps.map((_, i) => (
+          <div
+            key={i}
+            className="h-1 flex-1 rounded-full transition-all duration-500"
+            style={{
+              background:
+                i + 1 < step  ? 'linear-gradient(90deg, #7C3AED, #5B21B6)' :
+                i + 1 === step ? 'linear-gradient(90deg, #7C3AED, #A78BFA)' :
+                '#E4E4E7',
+            }}
+          />
+        ))}
       </div>
-      <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-600 rounded-full transition-all duration-300"
-          style={{ width: `${PCT[step]}%` }}
-        />
+      <div className="flex justify-between mt-2">
+        <span className="text-xs font-medium text-[#7C3AED]">{steps[step - 1]}</span>
+        <span className="text-xs text-zinc-400">{step} / {steps.length}</span>
       </div>
     </div>
   );

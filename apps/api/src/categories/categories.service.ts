@@ -9,6 +9,13 @@ export class CategoriesService {
     const categories = await this.prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: { sortOrder: 'asc' },
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          select: { id: true, nameUz: true, nameRu: true, sortOrder: true },
+        },
+      },
     });
 
     // Attach live executor count per category

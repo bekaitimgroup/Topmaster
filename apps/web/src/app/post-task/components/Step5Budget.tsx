@@ -1,6 +1,7 @@
 'use client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-const PRESETS = [50000, 100000, 150000, 250000];
+const PRESETS = [50000, 100000, 200000, 500000];
 
 interface Props {
   value: { budgetUzs: string; paymentMethod: string };
@@ -9,103 +10,73 @@ interface Props {
   onBack: () => void;
 }
 
-function formatUzs(n: number) {
-  return n.toLocaleString('uz-UZ') + ' so\'m';
+function fmt(n: number, currency: string) {
+  return n.toLocaleString('uz-UZ') + ' ' + currency;
 }
 
 export default function Step5Budget({ value, onChange, onNext, onBack }: Props) {
-  const PAYMENT_METHODS = [
-    {
-      id: 'safe_deal',
-      label: 'Xavfsiz to\'lov',
-      desc: 'Pul platforma hisobida saqlanadi — ish tugagach ustaga o\'tkaziladi. Komissiya: 10% + 5 000 so\'m',
-    },
-    {
-      id: 'direct',
-      label: 'To\'g\'ridan-to\'g\'ri to\'lov',
-      desc: 'Naqd yoki to\'g\'ridan-to\'g\'ri o\'tkazma. Platforma komissiyasi yo\'q.',
-    },
-    {
-      id: 'b2b',
-      label: 'B2B (Aktlar bilan)',
-      desc: 'Yopuvchi hujjatlar bilan. Yuridik shaxslar uchun.',
-    },
-  ];
+  const { t } = useLanguage();
+  const s = t.postTask.step5;
 
-  const canNext = value.paymentMethod;
+  const METHODS = Object.entries(s.methods) as [string, { icon: string; label: string; desc: string }][];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Byudjet va to'lov</h2>
-        <p className="text-sm text-zinc-500">Usta siz belgilagan narxda yoki pastroqda taklif beradi</p>
+        <h2 className="text-2xl font-extrabold text-[#0D0D1A] mb-1">{s.title}</h2>
+        <p className="text-sm text-zinc-500">{s.subtitle}</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">
-          Byudjet <span className="text-zinc-400 font-normal">(ixtiyoriy)</span>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-3">
+          {s.budgetLabel} <span className="text-zinc-400 font-normal">({t.common.optional})</span>
         </label>
         <div className="flex flex-wrap gap-2 mb-3">
           {PRESETS.map((p) => (
-            <button
-              key={p}
-              onClick={() => onChange({ ...value, budgetUzs: String(p) })}
-              className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+            <button key={p} onClick={() => onChange({ ...value, budgetUzs: String(p) })}
+              className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
                 value.budgetUzs === String(p)
-                  ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
-                  : 'border-zinc-200 hover:border-zinc-300'
-              }`}
-            >
-              {formatUzs(p)}
+                  ? 'border-[#7C3AED] bg-[#F5F3FF] text-[#5B21B6]'
+                  : 'border-zinc-200 bg-white text-zinc-600 hover:border-[#A78BFA]'
+              }`}>
+              {fmt(p, t.currency)}
             </button>
           ))}
         </div>
         <div className="relative">
-          <input
-            type="number"
-            value={value.budgetUzs}
+          <input type="number" value={value.budgetUzs}
             onChange={(e) => onChange({ ...value, budgetUzs: e.target.value })}
-            placeholder="Boshqa miqdor kiriting"
-            min={0}
-            className="w-full rounded-xl border border-zinc-200 px-4 py-3 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-zinc-400">so'm</span>
+            placeholder={s.budgetOther} min={0}
+            className="w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 pr-16 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all" />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-zinc-400 font-medium">{t.currency}</span>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">To'lov usuli</label>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-3">{s.paymentLabel}</label>
         <div className="space-y-2">
-          {PAYMENT_METHODS.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onChange({ ...value, paymentMethod: m.id })}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-colors ${
-                value.paymentMethod === m.id
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-zinc-200 hover:border-zinc-300'
-              }`}
-            >
-              <p className="font-medium text-sm">{m.label}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{m.desc}</p>
+          {METHODS.map(([id, m]) => (
+            <button key={id} onClick={() => onChange({ ...value, paymentMethod: id })}
+              className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
+                value.paymentMethod === id ? 'border-[#7C3AED] bg-[#F5F3FF]' : 'border-zinc-200 bg-white hover:border-[#A78BFA]'
+              }`}>
+              <p className={`font-bold text-sm ${value.paymentMethod === id ? 'text-[#5B21B6]' : 'text-[#0D0D1A]'}`}>
+                {m.icon} {m.label}
+              </p>
+              <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{m.desc}</p>
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 py-3.5 rounded-xl border border-zinc-200 font-medium text-sm hover:bg-zinc-50 transition-colors"
-        >
-          Orqaga
+        <button onClick={onBack} className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm text-zinc-600 hover:bg-zinc-50 transition-all">
+          {t.common.back}
         </button>
-        <button
-          disabled={!canNext}
-          onClick={onNext}
-          className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-        >
-          Davom etish
+        <button disabled={!value.paymentMethod} onClick={onNext}
+          className="flex-1 py-4 rounded-2xl text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+          {t.common.next}
         </button>
       </div>
     </div>

@@ -2,10 +2,13 @@ import {
   IsBoolean,
   IsEnum,
   IsISO8601,
+  IsLatitude,
+  IsLongitude,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -22,23 +25,26 @@ export class CreateTaskDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   description?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   addressA?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   addressB?: string;
 
   @IsOptional()
-  @IsNumber()
+  @IsLatitude()
   @Type(() => Number)
   latA?: number;
 
   @IsOptional()
-  @IsNumber()
+  @IsLongitude()
   @Type(() => Number)
   lngA?: number;
 
@@ -52,6 +58,7 @@ export class CreateTaskDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(10_000_000_000)
   @Type(() => Number)
   budgetUzs?: number;
 
@@ -60,9 +67,25 @@ export class CreateTaskDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   privateInfo?: string;
 
   @IsOptional()
   @IsBoolean()
   collectMoney?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  carMakeId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  carModelId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1900)
+  @Max(2100)
+  @Type(() => Number)
+  carYear?: number;
 }

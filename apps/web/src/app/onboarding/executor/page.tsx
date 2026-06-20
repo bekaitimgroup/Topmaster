@@ -1,13 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ProgressBar from '../../post-task/components/ProgressBar';
 import Step1Personal from './components/Step1Personal';
 import Step2Categories from './components/Step2Categories';
 import Step3Skills from './components/Step3Skills';
 import Step4Portfolio from './components/Step4Portfolio';
 import Step5Subscription from './components/Step5Subscription';
 import { api, Category } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface FormState {
   fullName: string;
@@ -28,11 +29,9 @@ const INITIAL: FormState = {
   portfolio: [],
 };
 
-const STEP_LABELS = ['Shaxsiy', 'Kategoriya', 'Ko\'nikmalar', 'Portfolio', 'Obuna'];
-const PCT = [0, 20, 40, 60, 80, 100];
-
 export default function ExecutorOnboardingPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [loading, setLoading] = useState(false);
@@ -66,39 +65,47 @@ export default function ExecutorOnboardingPage() {
       await api.executor.register(fd);
       router.push('/executor/dashboard');
     } catch (e: any) {
-      setError(e.message ?? 'Xatolik yuz berdi');
+      setError(e.message ?? t.onboarding.errorGeneric);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <header className="bg-white border-b border-zinc-200 px-4 py-4 sticky top-0 z-10">
+    <div className="min-h-screen bg-[#F8F7FF] flex flex-col">
+      <header className="bg-white border-b border-zinc-100 px-4 py-4 sticky top-0 z-10">
         <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-3">
-            <button
-              onClick={() => step === 1 ? router.back() : back()}
-              className="text-zinc-500 hover:text-zinc-700 text-sm"
-            >
-              ← Orqaga
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={() => step === 1 ? router.back() : back()}
+              className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm">
+              ←
             </button>
-            <span className="text-sm font-medium text-zinc-700 ml-auto">
-              {step}/5 — {STEP_LABELS[step - 1]}
+            <span className="flex-1 text-center">
+              <span className="font-extrabold text-[#7C3AED]">top</span>
+              <span className="font-extrabold text-[#F59E0B]">master</span>
+              <span className="text-zinc-400 text-sm ml-2">— {t.onboarding.becomeMaster}</span>
             </span>
-          </div>
-          <div className="w-full">
-            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${PCT[step]}%` }}
-              />
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <span className="text-xs font-semibold text-zinc-400">{step}/5</span>
             </div>
+          </div>
+          <div className="flex gap-1.5">
+            {t.onboarding.steps.map((_, i) => (
+              <div
+                key={i}
+                className="h-1 flex-1 rounded-full transition-all duration-500"
+                style={{
+                  background: i + 1 < step ? 'linear-gradient(90deg, #7C3AED, #5B21B6)' :
+                              i + 1 === step ? 'linear-gradient(90deg, #7C3AED, #A78BFA)' : '#E4E4E7',
+                }}
+              />
+            ))}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-8">
         {step === 1 && (
           <Step1Personal
             value={{ fullName: form.fullName, city: form.city, dateOfBirth: form.dateOfBirth, email: form.email }}

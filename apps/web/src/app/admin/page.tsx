@@ -4,14 +4,11 @@ import { useRouter } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-function authHeader() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` };
-}
-
 async function apiFetch(path: string, init?: RequestInit) {
   const res = await fetch(`${API}/api${path}`, {
     ...init,
-    headers: { ...authHeader(), 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
@@ -342,12 +339,10 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { router.replace('/'); return; }
-    fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/api/auth/me`, { credentials: 'include' })
       .then(r => r.json())
       .then(u => {
-        if (u.role !== 'admin') { router.replace('/'); return; }
+        if (!u?.id || u.role !== 'admin') { router.replace('/'); return; }
         setAuthorized(true);
       })
       .catch(() => router.replace('/'));

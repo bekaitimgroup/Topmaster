@@ -42,11 +42,7 @@ export function useTaskFeed(filters: FeedFilters = {}) {
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/tasks/feed?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        },
+        { credentials: 'include' },
       );
       const data = await res.json();
       setTasks(data.tasks ?? []);
@@ -60,12 +56,9 @@ export function useTaskFeed(filters: FeedFilters = {}) {
 
   // Socket.io connection
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     const socket = io(
       `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/tasks`,
-      { auth: { token }, transports: ['websocket'] },
+      { withCredentials: true, transports: ['websocket'] },
     );
     socketRef.current = socket;
 
