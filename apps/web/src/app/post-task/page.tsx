@@ -11,6 +11,7 @@ import Step6Review from './components/Step6Review';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 interface FormState {
   // Step 1 — category + service type
@@ -53,10 +54,19 @@ const INITIAL: FormState = {
 export default function PostTaskPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { checked } = useRequireAuth();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  if (!checked) {
+    return (
+      <div className="min-h-screen bg-[#F8F7FF] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#7C3AED] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   function next() { setStep((s) => Math.min(s + 1, 6)); }
   function back() { setStep((s) => Math.max(s - 1, 1)); }
