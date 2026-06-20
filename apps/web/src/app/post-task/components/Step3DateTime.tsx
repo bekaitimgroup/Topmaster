@@ -10,24 +10,24 @@ interface Props {
 }
 
 function toLocal(d: Date) { return d.toISOString().slice(0, 10); }
-const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
+const INPUT  = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 const SELECT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all appearance-none cursor-pointer';
 
 const HOURS   = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = ['00', '15', '30', '45'];
 
-function parseTime(t: string) {
-  const [h = '', m = ''] = (t || '').split(':');
-  return { h, m };
-}
-function buildTime(h: string, m: string) {
-  return h && m ? `${h}:${m}` : '';
-}
-
 export default function Step3DateTime({ value, onChange, onNext, onBack }: Props) {
   const { t } = useLanguage();
   const s = t.postTask.step3;
   const [error, setError] = useState('');
+  const [hour, setHour]   = useState(() => value.time?.split(':')[0] ?? '');
+  const [minute, setMin]  = useState(() => value.time?.split(':')[1] ?? '');
+
+  function applyTime(h: string, m: string) {
+    const time = h && m ? `${h}:${m}` : '';
+    onChange({ ...value, time });
+    setError('');
+  }
 
   const today = new Date();
   const tomorrow = new Date(today);
@@ -76,8 +76,8 @@ export default function Step3DateTime({ value, onChange, onNext, onBack }: Props
         <div className="grid grid-cols-2 gap-3">
           <div className="relative">
             <select
-              value={parseTime(value.time).h}
-              onChange={(e) => { onChange({ ...value, time: buildTime(e.target.value, parseTime(value.time).m) }); setError(''); }}
+              value={hour}
+              onChange={(e) => { setHour(e.target.value); applyTime(e.target.value, minute); }}
               className={SELECT}
             >
               <option value="">{s.hour ?? 'Soat'}</option>
@@ -87,8 +87,8 @@ export default function Step3DateTime({ value, onChange, onNext, onBack }: Props
           </div>
           <div className="relative">
             <select
-              value={parseTime(value.time).m}
-              onChange={(e) => { onChange({ ...value, time: buildTime(parseTime(value.time).h, e.target.value) }); setError(''); }}
+              value={minute}
+              onChange={(e) => { setMin(e.target.value); applyTime(hour, e.target.value); }}
               className={SELECT}
             >
               <option value="">{s.minute ?? 'Daqiqa'}</option>
