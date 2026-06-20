@@ -155,7 +155,6 @@ const ru: Lang = {
       photosHint:         'необязательно, max 5',
       privateBtn:         'Добавить конфиденциальные данные (код доступа и т.д.)',
       privatePlaceholder: 'Видит только выбранный мастер',
-      collectMoney:       '💰 Мастер привезёт деньги (доставка e-commerce)',
     },
     step5: {
       title:        'Бюджет и оплата',

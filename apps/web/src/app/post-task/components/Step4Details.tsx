@@ -3,8 +3,8 @@ import { useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
-  value: { description: string; privateInfo: string; collectMoney: boolean; photos: File[] };
-  onChange: (v: { description: string; privateInfo: string; collectMoney: boolean; photos: File[] }) => void;
+  value: { description: string; privateInfo: string; photos: File[] };
+  onChange: (v: { description: string; privateInfo: string; photos: File[] }) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -76,13 +76,6 @@ export default function Step4Details({ value, onChange, onNext, onBack }: Props)
           onChange={(e) => onChange({ ...value, privateInfo: e.target.value })}
           rows={2} placeholder={s.privatePlaceholder} className={TEXTAREA} />
       )}
-
-      <label className="flex items-center gap-3 cursor-pointer p-4 rounded-2xl border-2 border-zinc-200 bg-white hover:border-[#A78BFA] transition-all">
-        <input type="checkbox" checked={value.collectMoney}
-          onChange={(e) => onChange({ ...value, collectMoney: e.target.checked })}
-          className="w-4 h-4 accent-[#7C3AED]" />
-        <span className="text-sm font-medium text-[#0D0D1A]">{s.collectMoney}</span>
-      </label>
 
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm text-zinc-600 hover:bg-zinc-50 transition-all">

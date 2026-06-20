@@ -71,10 +71,6 @@ export class CreateTaskDto {
   privateInfo?: string;
 
   @IsOptional()
-  @IsBoolean()
-  collectMoney?: boolean;
-
-  @IsOptional()
   @IsUUID()
   carMakeId?: string;
 

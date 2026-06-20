@@ -35,7 +35,6 @@ interface FormState {
   // Step 4
   description: string;
   privateInfo: string;
-  collectMoney: boolean;
   photos: File[];
   // Step 5
   budgetUzs: string;
@@ -47,7 +46,7 @@ const INITIAL: FormState = {
   carMakeId: '', carMakeName: '', carModelId: '', carModelName: '', carYear: '',
   addressA: '', addressB: '', isRemote: false,
   date: '', time: '',
-  description: '', privateInfo: '', collectMoney: false, photos: [],
+  description: '', privateInfo: '', photos: [],
   budgetUzs: '', paymentMethod: '',
 };
 
@@ -79,7 +78,6 @@ export default function PostTaskPage() {
       fd.append('isRemote', String(form.isRemote));
       if (form.description) fd.append('description', form.description);
       if (form.privateInfo) fd.append('privateInfo', form.privateInfo);
-      fd.append('collectMoney', String(form.collectMoney));
       if (form.budgetUzs) fd.append('budgetUzs', form.budgetUzs);
       if (form.carMakeId) fd.append('carMakeId', form.carMakeId);
       if (form.carModelId) fd.append('carModelId', form.carModelId);
@@ -155,7 +153,6 @@ export default function PostTaskPage() {
             value={{
               description: form.description,
               privateInfo: form.privateInfo,
-              collectMoney: form.collectMoney,
               photos: form.photos,
             }}
             onChange={(v) => patch(v)}

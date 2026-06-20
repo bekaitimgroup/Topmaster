@@ -155,7 +155,6 @@ const uz = {
       photosHint: 'ixtiyoriy, max 5',
       privateBtn: "Maxfiy ma'lumot qo'shish (kirish kodi va h.k.)",
       privatePlaceholder: "Faqat tanlangan usta ko'radi",
-      collectMoney: "💰 Usta pul yig'ib keladi (e-tijorat yetkazish)",
     },
     step5: {
       title: "Byudjet va to'lov",
