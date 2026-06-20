@@ -22,12 +22,13 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function Step6Review({ data, onSubmit, onBack, loading, error }: Props) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const s = t.postTask.step6;
   const r = s.rows;
 
+  const locale = lang === 'ru' ? 'ru-RU' : 'uz-UZ';
   const dateStr = data.date && data.time
-    ? new Date(`${data.date}T${data.time}`).toLocaleString('uz-UZ', {
+    ? new Date(`${data.date}T${data.time}`).toLocaleString(locale, {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
       })
     : '—';
