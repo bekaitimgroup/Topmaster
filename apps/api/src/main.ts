@@ -5,6 +5,11 @@ import helmet from 'helmet';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const cookieParser = require('cookie-parser');
 
+// Prisma stores monetary values as BigInt — patch JSON serialization
+(BigInt.prototype as unknown as Record<string, unknown>).toJSON = function () {
+  return Number(this);
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
