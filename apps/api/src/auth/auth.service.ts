@@ -1,10 +1,14 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import { PublicRole } from './dto/verify-otp.dto';
+import { TelegramAuthDto } from './dto/social-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { EskizService } from './eskiz.service';
+
+const googleClient = new OAuth2Client();
 
 const OTP_TTL       = 5 * 60;  // 5 min
 const COOLDOWN_TTL  = 60;       // 60 s resend cooldown
@@ -153,6 +157,99 @@ export class AuthService {
         },
       },
     });
+  }
+
+  async loginWithTelegram(dto: TelegramAuthDto): Promise<{ accessToken: string; isNewUser: boolean }> {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) throw new HttpException('Telegram auth not configured', HttpStatus.SERVICE_UNAVAILABLE);
+
+    // Verify Telegram hash: sort fields, join as key=value\n, HMAC-SHA256 with SHA256(botToken)
+    const { hash, ...fields } = dto;
+    const checkStr = Object.entries(fields)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+    const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const expected  = createHmac('sha256', secretKey).update(checkStr).digest('hex');
+    if (expected !== hash) throw new UnauthorizedException('Invalid Telegram auth data');
+
+    // Reject auth data older than 1 hour
+    if (Date.now() / 1000 - dto.auth_date > 3600) {
+      throw new UnauthorizedException('Telegram auth data expired');
+    }
+
+    const telegramId = String(dto.id);
+    let isNewUser = false;
+    let user = await this.prisma.user.findUnique({ where: { telegramId } });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          telegramId,
+          fullName: [dto.first_name, dto.last_name].filter(Boolean).join(' ') || null,
+          avatarUrl: dto.photo_url ?? null,
+          role: 'customer',
+          isPhoneVerified: false,
+        },
+      });
+      isNewUser = true;
+    }
+
+    if (!user.isActive) throw new HttpException('Hisobingiz bloklangan', HttpStatus.FORBIDDEN);
+
+    const accessToken = this.jwt.sign({ sub: user.id, role: user.role });
+    return { accessToken, isNewUser };
+  }
+
+  async loginWithGoogle(credential: string): Promise<{ accessToken: string; isNewUser: boolean }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) throw new HttpException('Google auth not configured', HttpStatus.SERVICE_UNAVAILABLE);
+
+    let googleId: string;
+    let gEmail: string | null = null;
+    let gName:  string | null = null;
+    let gPic:   string | null = null;
+
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: clientId });
+      const payload = ticket?.getPayload?.();
+      if (!payload?.sub) throw new Error('no sub');
+      googleId = payload.sub;
+      gEmail   = payload.email   ?? null;
+      gName    = payload.name    ?? null;
+      gPic     = payload.picture ?? null;
+    } catch {
+      throw new UnauthorizedException('Invalid Google token');
+    }
+
+    let isNewUser = false;
+    let user = await this.prisma.user.findUnique({ where: { googleId } });
+
+    if (!user && gEmail) {
+      user = await this.prisma.user.findUnique({ where: { email: gEmail } });
+      if (user) {
+        user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
+      }
+    }
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          googleId,
+          email:    gEmail,
+          fullName: gName,
+          avatarUrl: gPic,
+          role: 'customer',
+          isPhoneVerified: false,
+        },
+      });
+      isNewUser = true;
+    }
+
+    if (!user.isActive) throw new HttpException('Hisobingiz bloklangan', HttpStatus.FORBIDDEN);
+
+    const accessToken = this.jwt.sign({ sub: user.id, role: user.role });
+    return { accessToken, isNewUser };
   }
 
   private hashCode(phone: string, code: string): string {

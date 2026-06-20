@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { TelegramAuthDto, GoogleAuthDto } from './dto/social-auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
@@ -33,6 +34,26 @@ export class AuthController {
     // Set token as httpOnly cookie — JS cannot read it
     res.cookie('token', result.accessToken, COOKIE_OPTIONS);
     // Return without the token so it never touches the client JS
+    return { isNewUser: result.isNewUser };
+  }
+
+  @Post('telegram')
+  async telegramAuth(
+    @Body() dto: TelegramAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.loginWithTelegram(dto);
+    res.cookie('token', result.accessToken, COOKIE_OPTIONS);
+    return { isNewUser: result.isNewUser };
+  }
+
+  @Post('google')
+  async googleAuth(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.loginWithGoogle(dto.credential);
+    res.cookie('token', result.accessToken, COOKIE_OPTIONS);
     return { isNewUser: result.isNewUser };
   }
 

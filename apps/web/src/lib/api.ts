@@ -32,6 +32,18 @@ export const api = {
       }),
     me: () => request('/auth/me'),
     logout: () => request('/auth/logout', { method: 'POST' }),
+    telegram: (data: Record<string, unknown>) =>
+      request<{ isNewUser: boolean }>('/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    google: (credential: string) =>
+      request<{ isNewUser: boolean }>('/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      }),
   },
   categories: {
     list: () => request<Category[]>('/categories'),
