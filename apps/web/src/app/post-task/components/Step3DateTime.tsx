@@ -11,6 +11,18 @@ interface Props {
 
 function toLocal(d: Date) { return d.toISOString().slice(0, 10); }
 const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
+const SELECT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all appearance-none cursor-pointer';
+
+const HOURS   = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = ['00', '15', '30', '45'];
+
+function parseTime(t: string) {
+  const [h = '', m = ''] = (t || '').split(':');
+  return { h, m };
+}
+function buildTime(h: string, m: string) {
+  return h && m ? `${h}:${m}` : '';
+}
 
 export default function Step3DateTime({ value, onChange, onNext, onBack }: Props) {
   const { t } = useLanguage();
@@ -52,18 +64,38 @@ export default function Step3DateTime({ value, onChange, onNext, onBack }: Props
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.date}</label>
-          <input type="date" value={value.date} min={toLocal(today)}
-            onChange={(e) => { onChange({ ...value, date: e.target.value }); setError(''); }}
-            className={INPUT} />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.time}</label>
-          <input type="time" value={value.time}
-            onChange={(e) => { onChange({ ...value, time: e.target.value }); setError(''); }}
-            className={INPUT} />
+      <div>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.date}</label>
+        <input type="date" value={value.date} min={toLocal(today)}
+          onChange={(e) => { onChange({ ...value, date: e.target.value }); setError(''); }}
+          className={INPUT} />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-[#0D0D1A] mb-2">{s.time}</label>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="relative">
+            <select
+              value={parseTime(value.time).h}
+              onChange={(e) => { onChange({ ...value, time: buildTime(e.target.value, parseTime(value.time).m) }); setError(''); }}
+              className={SELECT}
+            >
+              <option value="">{s.hour ?? 'Soat'}</option>
+              {HOURS.map((h) => <option key={h} value={h}>{h}:00</option>)}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">▾</span>
+          </div>
+          <div className="relative">
+            <select
+              value={parseTime(value.time).m}
+              onChange={(e) => { onChange({ ...value, time: buildTime(parseTime(value.time).h, e.target.value) }); setError(''); }}
+              className={SELECT}
+            >
+              <option value="">{s.minute ?? 'Daqiqa'}</option>
+              {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">▾</span>
+          </div>
         </div>
       </div>
 

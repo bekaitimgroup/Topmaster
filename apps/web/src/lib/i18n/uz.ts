@@ -141,6 +141,8 @@ const uz = {
       tomorrow: '🗓️ Ertaga',
       date: 'Sana',
       time: 'Vaqt',
+      hour: 'Soat',
+      minute: 'Daqiqa',
       errorRequired: 'Sana va vaqtni tanlang',
       errorTooSoon: "Vazifa boshlanish vaqti kamida 30 daqiqa bo'lishi kerak!",
     },

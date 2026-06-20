@@ -141,6 +141,8 @@ const ru: Lang = {
       tomorrow:      '🗓️ Завтра',
       date:          'Дата',
       time:          'Время',
+      hour:          'Час',
+      minute:        'Минута',
       errorRequired: 'Выберите дату и время',
       errorTooSoon:  'Время начала задачи должно быть минимум через 30 минут!',
     },
