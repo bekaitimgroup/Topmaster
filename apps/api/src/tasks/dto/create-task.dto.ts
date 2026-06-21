@@ -13,7 +13,7 @@ import {
   Min,
 } from 'class-validator';
 import { PaymentMethod } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateTaskDto {
   @IsUUID()
@@ -49,6 +49,7 @@ export class CreateTaskDto {
   lngA?: number;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isRemote?: boolean;
 
