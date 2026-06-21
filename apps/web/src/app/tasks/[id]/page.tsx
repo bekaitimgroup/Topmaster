@@ -53,7 +53,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [task, setTask] = useState<Task | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -166,6 +166,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const isCustomer = task.customer.id === currentUserId;
+  const dateLocale = lang === 'ru' ? 'ru-RU' : 'uz-UZ';
   const td = t.taskDetail;
   const statusLabel = (td.statusLabels as Record<string, string>)[task.status] ?? task.status;
   const statusColor = STATUS_COLORS[task.status] ?? 'bg-zinc-100 text-zinc-600';
@@ -206,7 +207,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             <div>
               <p className="text-zinc-400 text-xs mb-0.5">{td.info.start}</p>
               <p className="font-medium">
-                {new Date(task.startAt).toLocaleString('uz-UZ', {
+                {new Date(task.startAt).toLocaleString(dateLocale, {
                   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                 })}
               </p>
