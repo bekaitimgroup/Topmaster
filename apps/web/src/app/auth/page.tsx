@@ -126,15 +126,17 @@ function AuthForm() {
           {/* ── Google ───────────────────────────────── */}
           {GOOGLE_CLIENT_ID ? (
             <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-              <GoogleLogin
-                onSuccess={onGoogleSuccess}
-                onError={() => setError(isRu ? 'Ошибка Google входа' : 'Google orqali kirish xatosi')}
-                width="100%"
-                text="signin_with"
-                shape="rectangular"
-                theme="outline"
-                size="large"
-              />
+              <div className="w-full flex justify-center">
+                <GoogleLogin
+                  onSuccess={onGoogleSuccess}
+                  onError={() => setError(isRu ? 'Ошибка Google входа' : 'Google orqali kirish xatosi')}
+                  width={336}
+                  text="signin_with"
+                  shape="rectangular"
+                  theme="outline"
+                  size="large"
+                />
+              </div>
             </GoogleOAuthProvider>
           ) : (
             <button disabled className={BTN + ' border-2 border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>

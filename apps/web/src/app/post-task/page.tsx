@@ -13,6 +13,24 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
+function LogoutButton() {
+  const router = useRouter();
+  const { lang } = useLanguage();
+  async function logout() {
+    try { await api.auth.logout(); } catch {}
+    router.replace('/auth');
+  }
+  return (
+    <button
+      onClick={logout}
+      title={lang === 'ru' ? 'Выйти' : 'Chiqish'}
+      className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:border-red-300 transition-colors text-xs"
+    >
+      ⏻
+    </button>
+  );
+}
+
 interface FormState {
   // Step 1 — category + service type
   categoryId: string;
@@ -119,6 +137,7 @@ export default function PostTaskPage() {
               <span className="font-extrabold text-[#F59E0B]">master</span>
             </span>
             <LanguageSwitcher />
+            <LogoutButton />
             <span className="text-xs font-semibold text-zinc-400 w-6 text-right">
               {step}/6
             </span>
