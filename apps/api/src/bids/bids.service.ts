@@ -29,7 +29,8 @@ export class BidsService {
       include: {
         subscriptions: {
           where: {
-            categoryId: task.categoryId,
+            // Match subscription to this subcategory OR its parent category
+            categoryId: { in: [task.categoryId, task.category.parentId].filter(Boolean) as string[] },
             isActive: true,
             expiresAt: { gt: new Date() },
           },
