@@ -98,11 +98,19 @@ export class TasksService {
     const subscribedCategoryIds = profile.subscriptions.map((s) => s.categoryId);
     if (subscribedCategoryIds.length === 0) return { tasks: [], total: 0 };
 
+    // Match tasks whose category is subscribed, OR whose category's parent is subscribed
+    // (executors subscribe to parent categories; tasks are posted with subcategory IDs)
+    const categoryWhere = {
+      OR: [
+        { id: { in: subscribedCategoryIds } },
+        { parentId: { in: subscribedCategoryIds } },
+      ],
+      ...(categoryId ? { id: categoryId } : {}),
+    };
+
     const where: any = {
       status: { in: ['published', 'bids_received'] },
-      categoryId: categoryId
-        ? { in: [categoryId].filter((id) => subscribedCategoryIds.includes(id)) }
-        : { in: subscribedCategoryIds },
+      category: categoryWhere,
     };
 
     if (district) {
