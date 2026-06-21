@@ -1,10 +1,26 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { api } from '@/lib/api';
 
 function Navbar() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const router = useRouter();
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    api.auth.me().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
+  }, []);
+
+  async function logout() {
+    try { await api.auth.logout(); } catch {}
+    setLoggedIn(false);
+    router.replace('/auth');
+  }
+
   return (
     <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 md:px-12">
       <div className="absolute inset-0 bg-[#0B0B18]/70 backdrop-blur-md border-b border-white/5" />
@@ -19,9 +35,18 @@ function Navbar() {
       </div>
       <div className="relative flex items-center gap-3">
         <LanguageSwitcher variant="dark" />
-        <Link href="/post-task" className="hidden sm:block text-sm font-semibold text-white/80 hover:text-white transition-colors">
-          {t.nav.login}
-        </Link>
+        {loggedIn ? (
+          <button
+            onClick={logout}
+            className="text-sm font-semibold text-white/60 hover:text-white/90 transition-colors"
+          >
+            {lang === 'ru' ? 'Выйти' : 'Chiqish'}
+          </button>
+        ) : (
+          <Link href="/post-task" className="hidden sm:block text-sm font-semibold text-white/80 hover:text-white transition-colors">
+            {t.nav.login}
+          </Link>
+        )}
         <Link
           href="/post-task"
           className="text-sm font-bold px-4 py-2 rounded-full text-white transition-all hover:scale-105 active:scale-95"
