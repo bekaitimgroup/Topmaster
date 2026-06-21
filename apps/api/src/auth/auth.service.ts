@@ -1,14 +1,11 @@
 import { Injectable, BadRequestException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { OAuth2Client } from 'google-auth-library';
 import { PublicRole } from './dto/verify-otp.dto';
 import { TelegramAuthDto } from './dto/social-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { EskizService } from './eskiz.service';
-
-const googleClient = new OAuth2Client();
 
 const OTP_TTL       = 5 * 60;  // 5 min
 const COOLDOWN_TTL  = 60;       // 60 s resend cooldown
@@ -201,23 +198,23 @@ export class AuthService {
     return { accessToken, isNewUser };
   }
 
-  async loginWithGoogle(credential: string): Promise<{ accessToken: string; isNewUser: boolean }> {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    if (!clientId) throw new HttpException('Google auth not configured', HttpStatus.SERVICE_UNAVAILABLE);
-
+  async loginWithGoogle(googleAccessToken: string): Promise<{ accessToken: string; isNewUser: boolean }> {
     let googleId: string;
     let gEmail: string | null = null;
     let gName:  string | null = null;
     let gPic:   string | null = null;
 
     try {
-      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: clientId });
-      const payload = ticket?.getPayload?.();
-      if (!payload?.sub) throw new Error('no sub');
-      googleId = payload.sub;
-      gEmail   = payload.email   ?? null;
-      gName    = payload.name    ?? null;
-      gPic     = payload.picture ?? null;
+      const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${googleAccessToken}` },
+      });
+      if (!res.ok) throw new Error('userinfo failed');
+      const p = await res.json() as any;
+      if (!p.id) throw new Error('no id');
+      googleId = p.id;
+      gEmail   = p.email   ?? null;
+      gName    = p.name    ?? null;
+      gPic     = p.picture ?? null;
     } catch {
       throw new UnauthorizedException('Invalid Google token');
     }

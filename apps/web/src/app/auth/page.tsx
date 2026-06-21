@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -9,8 +9,8 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const TG_BOT_NAME      = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
 
-const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 const BTN   = 'w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100';
+const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 
 function Divider({ text }: { text: string }) {
   return (
@@ -22,6 +22,23 @@ function Divider({ text }: { text: string }) {
   );
 }
 
+function GoogleButton({ onSuccess, label }: { onSuccess: (token: string) => void; label: string }) {
+  const login = useGoogleLogin({
+    onSuccess: (resp) => onSuccess(resp.access_token),
+    onError: () => {},
+  });
+  return (
+    <button
+      type="button"
+      onClick={() => login()}
+      className={BTN + ' border-2 border-zinc-200 bg-white text-[#3c4043] flex items-center justify-center gap-3'}
+    >
+      <GoogleIcon />
+      {label}
+    </button>
+  );
+}
+
 function AuthForm() {
   const router      = useRouter();
   const params      = useSearchParams();
@@ -29,21 +46,21 @@ function AuthForm() {
   const { lang }    = useLanguage();
   const isRu        = lang === 'ru';
 
-  const [step, setStep]       = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone]     = useState('+998');
-  const [code, setCode]       = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [step, setStep]         = useState<'phone' | 'code'>('phone');
+  const [phone, setPhone]       = useState('+998');
+  const [code, setCode]         = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
   const [cooldown, setCooldown] = useState(0);
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Telegram Widget
+  // Load Telegram widget into hidden div; expose global callback
   useEffect(() => {
     (window as any).onTelegramAuth = async (user: Record<string, unknown>) => {
       setLoading(true); setError('');
@@ -55,7 +72,7 @@ function AuthForm() {
     };
 
     if (!TG_BOT_NAME) return;
-    const container = document.getElementById('telegram-login-container');
+    const container = document.getElementById('tg-widget');
     if (!container || container.childNodes.length > 0) return;
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
@@ -67,9 +84,27 @@ function AuthForm() {
     container.appendChild(script);
   }, [redirect, router]);
 
+  function handleTelegramClick() {
+    const btn = document.querySelector('#tg-widget a') as HTMLElement | null;
+    if (btn) {
+      btn.click();
+    } else {
+      setError(isRu ? 'Telegram ещё загружается, попробуйте снова' : "Telegram yuklanmoqda, qayta urinib ko'ring");
+    }
+  }
+
+  async function onGoogleSuccess(accessToken: string) {
+    setLoading(true); setError('');
+    try {
+      await api.auth.google(accessToken);
+      router.replace(redirect);
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
+  }
+
   async function sendOtp() {
     if (!/^\+998[0-9]{9}$/.test(phone)) {
-      setError(isRu ? 'Введите номер: +998 XX XXX-XX-XX' : "+998 XX XXX-XX-XX formatida kiriting");
+      setError(isRu ? 'Введите номер: +998 XX XXX-XX-XX' : '+998 XX XXX-XX-XX formatida kiriting');
       return;
     }
     setLoading(true); setError('');
@@ -92,18 +127,11 @@ function AuthForm() {
     finally { setLoading(false); }
   }
 
-  async function onGoogleSuccess(credentialResponse: { credential?: string }) {
-    if (!credentialResponse.credential) return;
-    setLoading(true); setError('');
-    try {
-      await api.auth.google(credentialResponse.credential);
-      router.replace(redirect);
-    } catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
-  }
-
   return (
     <div className="min-h-screen bg-[#F8F7FF] flex flex-col items-center justify-center px-4">
+      {/* Hidden Telegram widget — button programmatically clicked */}
+      <div id="tg-widget" className="hidden" />
+
       <div className="absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
@@ -115,27 +143,18 @@ function AuthForm() {
             <span className="text-[#F59E0B]">master</span>
           </div>
           <p className="text-sm text-zinc-500">
-            {isRu ? 'Войдите, чтобы продолжить' : "Davom etish uchun kiring"}
+            {isRu ? 'Войдите, чтобы продолжить' : 'Davom etish uchun kiring'}
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-zinc-100 p-6 space-y-4">
+        <div className="bg-white rounded-3xl shadow-sm border border-zinc-100 p-6 space-y-3">
 
-          {/* ── Google ───────────────────────────────── */}
+          {/* Google */}
           {GOOGLE_CLIENT_ID ? (
-            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-              <div className="w-full flex justify-center">
-                <GoogleLogin
-                  onSuccess={onGoogleSuccess}
-                  onError={() => setError(isRu ? 'Ошибка Google входа' : 'Google orqali kirish xatosi')}
-                  width={336}
-                  text="signin_with"
-                  shape="rectangular"
-                  theme="outline"
-                  size="large"
-                />
-              </div>
-            </GoogleOAuthProvider>
+            <GoogleButton
+              onSuccess={onGoogleSuccess}
+              label={isRu ? 'Войти через Google' : 'Google orqali kirish'}
+            />
           ) : (
             <button disabled className={BTN + ' border-2 border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
               <GoogleIcon />
@@ -143,9 +162,18 @@ function AuthForm() {
             </button>
           )}
 
-          {/* ── Telegram ─────────────────────────────── */}
+          {/* Telegram */}
           {TG_BOT_NAME ? (
-            <div id="telegram-login-container" className="flex justify-center" />
+            <button
+              type="button"
+              onClick={handleTelegramClick}
+              disabled={loading}
+              className={BTN + ' text-white flex items-center justify-center gap-3'}
+              style={{ background: '#229ED9' }}
+            >
+              <TelegramIcon />
+              {isRu ? 'Войти через Telegram' : 'Telegram orqali kirish'}
+            </button>
           ) : (
             <button disabled className={BTN + ' border-2 border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
               <TelegramIcon />
@@ -155,7 +183,7 @@ function AuthForm() {
 
           <Divider text={isRu ? 'или по номеру телефона' : 'yoki telefon raqam orqali'} />
 
-          {/* ── Phone OTP ────────────────────────────── */}
+          {/* Phone OTP */}
           {step === 'phone' ? (
             <>
               <div>
@@ -241,7 +269,7 @@ function AuthForm() {
         </div>
 
         <p className="text-xs text-center text-zinc-400 mt-5">
-          {isRu ? 'Входя, вы соглашаетесь с условиями использования' : "Kirib, foydalanish shartlariga rozisiz"}
+          {isRu ? 'Входя, вы соглашаетесь с условиями использования' : 'Kirib, foydalanish shartlariga rozisiz'}
         </p>
       </div>
     </div>
@@ -261,7 +289,7 @@ function GoogleIcon() {
 
 function TelegramIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="#229ED9">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
       <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.02 9.531c-.148.658-.537.818-1.088.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.54 14.4l-2.95-.924c-.641-.2-.654-.641.136-.948l11.527-4.448c.534-.193 1.001.13.309.167z"/>
     </svg>
   );
@@ -269,8 +297,10 @@ function TelegramIcon() {
 
 export default function AuthPage() {
   return (
-    <Suspense>
-      <AuthForm />
-    </Suspense>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'placeholder'}>
+      <Suspense>
+        <AuthForm />
+      </Suspense>
+    </GoogleOAuthProvider>
   );
 }

@@ -38,11 +38,11 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }),
-    google: (credential: string) =>
+    google: (accessToken: string) =>
       request<{ isNewUser: boolean }>('/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential }),
+        body: JSON.stringify({ accessToken }),
       }),
   },
   categories: {

@@ -52,7 +52,7 @@ export class AuthController {
     @Body() dto: GoogleAuthDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.auth.loginWithGoogle(dto.credential);
+    const result = await this.auth.loginWithGoogle(dto.accessToken);
     res.cookie('token', result.accessToken, COOKIE_OPTIONS);
     return { isNewUser: result.isNewUser };
   }

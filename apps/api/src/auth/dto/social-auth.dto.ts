@@ -28,5 +28,5 @@ export class TelegramAuthDto {
 
 export class GoogleAuthDto {
   @IsString()
-  credential: string;
+  accessToken: string;
 }
