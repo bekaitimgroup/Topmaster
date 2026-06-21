@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Script from 'next/script';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -44,7 +43,7 @@ function AuthForm() {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  // Telegram Widget callback (called by the widget script)
+  // Telegram Widget
   useEffect(() => {
     (window as any).onTelegramAuth = async (user: Record<string, unknown>) => {
       setLoading(true); setError('');
@@ -54,6 +53,18 @@ function AuthForm() {
       } catch (e: any) { setError(e.message); }
       finally { setLoading(false); }
     };
+
+    if (!TG_BOT_NAME) return;
+    const container = document.getElementById('telegram-login-container');
+    if (!container || container.childNodes.length > 0) return;
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.setAttribute('data-telegram-login', TG_BOT_NAME);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+    script.async = true;
+    container.appendChild(script);
   }, [redirect, router]);
 
   async function sendOtp() {
@@ -93,19 +104,6 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen bg-[#F8F7FF] flex flex-col items-center justify-center px-4">
-      {/* Telegram widget script */}
-      {TG_BOT_NAME && (
-        <Script
-          src="https://telegram.org/js/telegram-widget.js?22"
-          data-telegram-login={TG_BOT_NAME}
-          data-size="large"
-          data-onauth="onTelegramAuth(user)"
-          data-request-access="write"
-          id="telegram-widget"
-          strategy="lazyOnload"
-        />
-      )}
-
       <div className="absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
