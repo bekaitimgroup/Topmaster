@@ -1,8 +1,10 @@
 'use strict';
 /**
  * Usage: node prisma/make-executor.js <phone|email>
- * Example: node prisma/make-executor.js +998901234567
- * Promotes an existing user to executor and creates their profile.
+ * Example: node prisma/make-executor.js bek@aitimgroup.com
+ *
+ * Promotes a user to executor and creates an unlimited 1-year subscription
+ * for every category so they can see and bid on all tasks.
  */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -21,7 +23,6 @@ async function main() {
   let user = await prisma.user.findUnique({ where });
 
   if (!user) {
-    // Create the user if they don't exist yet
     const data = identifier.includes('@')
       ? { email: identifier, role: 'executor', isPhoneVerified: false }
       : { phone: identifier, role: 'executor', isPhoneVerified: true };
@@ -36,9 +37,9 @@ async function main() {
   }
 
   // Create executor profile if missing
-  const existing = await prisma.executorProfile.findUnique({ where: { userId: user.id } });
-  if (!existing) {
-    await prisma.executorProfile.create({
+  let profile = await prisma.executorProfile.findUnique({ where: { userId: user.id } });
+  if (!profile) {
+    profile = await prisma.executorProfile.create({
       data: {
         userId: user.id,
         city: 'Toshkent',
@@ -46,15 +47,54 @@ async function main() {
         badge: 'verified',
       },
     });
-    console.log('Created executor profile');
+    console.log('Created executor profile:', profile.id);
   } else {
-    console.log('Executor profile already exists');
+    console.log('Executor profile exists:', profile.id);
   }
 
-  console.log('\nDone! User can now log in and visit /executor/dashboard');
-  console.log('Phone:', user.phone ?? '(none)');
+  // Create unlimited 1-year subscriptions for ALL categories
+  const categories = await prisma.category.findMany({
+    where: { parentId: null }, // top-level only
+    select: { id: true, nameRu: true },
+  });
+
+  console.log(`\nCreating subscriptions for ${categories.length} categories...`);
+  const now = new Date();
+  const oneYearLater = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+
+  let created = 0;
+  for (const cat of categories) {
+    const existing = await prisma.subscription.findFirst({
+      where: { executorId: profile.id, categoryId: cat.id, isActive: true },
+    });
+    if (existing) {
+      console.log(`  skip ${cat.nameRu} (already subscribed)`);
+      continue;
+    }
+    await prisma.subscription.create({
+      data: {
+        executorId: profile.id,
+        categoryId: cat.id,
+        planType: 'unlimited_30',
+        bidsTotal: 9999,
+        bidsUsed: 0,
+        priceUzs: 0n,
+        startsAt: now,
+        expiresAt: oneYearLater,
+        isActive: true,
+      },
+    });
+    console.log(`  + ${cat.nameRu}`);
+    created++;
+  }
+
+  console.log(`\n✅ Done! Created ${created} new subscriptions.`);
+  console.log('User can now:');
+  console.log('  1. Log in at topmaster.uz/auth');
+  console.log('  2. Go to topmaster.uz/executor/dashboard to see task feed');
+  console.log('  3. Click any task to view details and place a bid');
+  console.log('\nPhone:', user.phone ?? '(none)');
   console.log('Email:', user.email ?? '(none)');
-  console.log('Role:', user.role);
 }
 
 main()
