@@ -5,8 +5,8 @@ RUN npm install -g pnpm
 COPY package.json ./
 RUN pnpm install --no-frozen-lockfile
 COPY . .
-RUN npx prisma generate
-RUN npx nest build
+RUN ./node_modules/.bin/prisma generate
+RUN ./node_modules/.bin/tsc -p tsconfig.build.json
 RUN ls dist/main.js
 
 FROM node:20-slim
