@@ -7,7 +7,7 @@ RUN pnpm install --no-frozen-lockfile
 COPY . .
 RUN ./node_modules/.bin/prisma generate
 RUN ./node_modules/.bin/tsc -p tsconfig.build.json
-RUN ls dist/main.js
+RUN ls dist/src/main.js
 
 FROM node:20-slim
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
@@ -19,4 +19,4 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY prisma ./prisma
 EXPOSE 4000
-CMD sh -c "npx prisma migrate deploy && node dist/main"
+CMD sh -c "npx prisma migrate deploy && node dist/src/main"
