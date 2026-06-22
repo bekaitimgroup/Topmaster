@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 /* ─── Icon mark ─────────────────────────────────────────────────────────────
    Rounded square, purple gradient, bold white T, amber "foot" accent.
@@ -22,7 +22,8 @@ export function LogoMark({ size = 40 }: { size?: number }) {
   const footX = (s - footW) / 2;
   const footY = stemBot - footH;
 
-  const uid = `lm${s}`;         // unique gradient id per size
+  const rawId = useId();
+  const uid = rawId.replace(/:/g, '');  // unique per instance, no colons
 
   return (
     <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} fill="none" xmlns="http://www.w3.org/2000/svg">
