@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { PublicRole } from './dto/verify-otp.dto';
@@ -103,6 +103,8 @@ export class AuthService {
     await this.redis.del(otpKey);
     await this.redis.del(failKey);
 
+    this.checkBetaAccess(phone);
+
     let isNewUser = false;
     let user = await this.prisma.user.findUnique({ where: { phone } });
 
@@ -176,6 +178,8 @@ export class AuthService {
     }
 
     const telegramId = String(dto.id);
+    this.checkBetaAccess(telegramId, dto.username);
+
     let isNewUser = false;
     let user = await this.prisma.user.findUnique({ where: { telegramId } });
 
@@ -219,6 +223,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid Google token');
     }
 
+    this.checkBetaAccess(gEmail);
+
     let isNewUser = false;
     let user = await this.prisma.user.findUnique({ where: { googleId } });
 
@@ -247,6 +253,20 @@ export class AuthService {
 
     const accessToken = this.jwt.sign({ sub: user.id, role: user.role });
     return { accessToken, isNewUser };
+  }
+
+  private checkBetaAccess(...identifiers: (string | null | undefined)[]) {
+    const raw = process.env.BETA_ALLOWED;
+    if (!raw) return; // no restriction — open access
+    const allowed = raw.split(',').map((s) => s.trim().toLowerCase());
+    const match = identifiers
+      .filter(Boolean)
+      .some((id) => allowed.includes(id!.toLowerCase()));
+    if (!match) {
+      throw new ForbiddenException(
+        'Beta versiyaga kirish cheklangan. Ruxsat olish uchun biz bilan bog\'laning.',
+      );
+    }
   }
 
   private hashCode(phone: string, code: string): string {
