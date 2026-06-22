@@ -1,58 +1,59 @@
-import React, { useId } from 'react';
+import React from 'react';
 
 /* ─── Icon mark ─────────────────────────────────────────────────────────────
-   Rounded square, purple gradient, bold white T, amber "foot" accent.
+   CSS gradient on wrapper div (no SVG defs/IDs that can conflict in DOM).
    Scales cleanly from 20 px (favicon) to 256 px (splash).
 ──────────────────────────────────────────────────────────────────────────── */
 export function LogoMark({ size = 40 }: { size?: number }) {
   const s = size;
-  const rx = s * 0.24;          // corner radius
-  const barX = s * 0.16;        // crossbar left
-  const barW = s * 0.68;        // crossbar width
-  const barY = s * 0.24;        // crossbar top
-  const barH = s * 0.19;        // crossbar height
-  const barR = barH / 2;        // crossbar pill radius
-  const stemW = s * 0.18;       // stem width
+  const rx = Math.round(s * 0.24);
+  const barX = s * 0.16;
+  const barW = s * 0.68;
+  const barY = s * 0.24;
+  const barH = s * 0.19;
+  const barR = barH / 2;
+  const stemW = s * 0.18;
   const stemX = (s - stemW) / 2;
-  const stemTop = barY + barH - barR;   // overlap pill so there's no gap
+  const stemTop = barY + barH - barR;
   const stemBot = s * 0.84;
   const stemH = stemBot - stemTop;
-  const footH = s * 0.10;       // amber foot height
-  const footW = stemW * 1.8;    // foot slightly wider than stem
+  const footH = s * 0.10;
+  const footW = stemW * 1.8;
   const footX = (s - footW) / 2;
   const footY = stemBot - footH;
 
-  const rawId = useId();
-  const uid = rawId.replace(/:/g, '');  // unique per instance, no colons
-
   return (
-    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={`${uid}bg`} x1="0" y1="0" x2={s} y2={s} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#9333EA"/>
-          <stop offset="100%" stopColor="#4C1D95"/>
-        </linearGradient>
-        <linearGradient id={`${uid}am`} x1={footX} y1={footY} x2={footX + footW} y2={footY} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FCD34D"/>
-          <stop offset="100%" stopColor="#F59E0B"/>
-        </linearGradient>
-      </defs>
-
-      {/* Background */}
-      <rect width={s} height={s} rx={rx} fill={`url(#${uid}bg)`}/>
-
-      {/* Subtle inner shine */}
-      <rect width={s} height={s * 0.5} rx={rx} fill="white" opacity="0.06"/>
-
-      {/* T crossbar */}
-      <rect x={barX} y={barY} width={barW} height={barH} rx={barR} fill="white"/>
-
-      {/* T stem */}
-      <rect x={stemX} y={stemTop} width={stemW} height={stemH} rx={stemW / 2} fill="white"/>
-
-      {/* Amber foot — "master's mark" / trophy base */}
-      <rect x={footX} y={footY} width={footW} height={footH} rx={footH / 2} fill={`url(#${uid}am)`}/>
-    </svg>
+    <div
+      style={{
+        width: s,
+        height: s,
+        borderRadius: rx,
+        background: 'linear-gradient(135deg, #9333EA 0%, #4C1D95 100%)',
+        flexShrink: 0,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Subtle top shine */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, transparent 55%)',
+        borderRadius: rx,
+      }} />
+      <svg
+        width={s} height={s}
+        viewBox={`0 0 ${s} ${s}`}
+        fill="none"
+        style={{ position: 'absolute', inset: 0 }}
+      >
+        {/* T crossbar */}
+        <rect x={barX} y={barY} width={barW} height={barH} rx={barR} fill="white"/>
+        {/* T stem */}
+        <rect x={stemX} y={stemTop} width={stemW} height={stemH} rx={stemW / 2} fill="white"/>
+        {/* Amber foot */}
+        <rect x={footX} y={footY} width={footW} height={footH} rx={footH / 2} fill="#F59E0B"/>
+      </svg>
+    </div>
   );
 }
 
