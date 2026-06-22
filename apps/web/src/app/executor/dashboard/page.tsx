@@ -6,6 +6,7 @@ import TaskCard from './components/TaskCard';
 import FilterBar from './components/FilterBar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Logo from '@/components/Logo';
 
 export default function ExecutorDashboard() {
   const [filters, setFilters] = useState<FeedFilters>({});
@@ -17,10 +18,7 @@ export default function ExecutorDashboard() {
     <div className="min-h-screen bg-[#F8F7FF]">
       <header className="bg-white border-b border-zinc-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="font-extrabold text-lg text-[#7C3AED]">top</span>
-            <span className="font-extrabold text-lg text-[#F59E0B]">master</span>
-          </div>
+          <Logo size="sm" />
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <Link href="/executor/subscriptions"

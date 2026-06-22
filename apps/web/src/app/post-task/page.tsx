@@ -11,6 +11,7 @@ import Step6Review from './components/Step6Review';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Logo from '@/components/Logo';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 function LogoutButton() {
@@ -136,9 +137,8 @@ export default function PostTaskPage() {
             >
               ←
             </button>
-            <span className="flex-1 text-center">
-              <span className="font-extrabold text-[#7C3AED]">top</span>
-              <span className="font-extrabold text-[#F59E0B]">master</span>
+            <span className="flex-1 flex justify-center">
+              <Logo size="sm" />
             </span>
             <LanguageSwitcher />
             <LogoutButton />

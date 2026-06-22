@@ -9,6 +9,7 @@ import Step5Subscription from './components/Step5Subscription';
 import { api, Category } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Logo from '@/components/Logo';
 
 interface FormState {
   fullName: string;
@@ -80,10 +81,9 @@ export default function ExecutorOnboardingPage() {
               className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm">
               ←
             </button>
-            <span className="flex-1 text-center">
-              <span className="font-extrabold text-[#7C3AED]">top</span>
-              <span className="font-extrabold text-[#F59E0B]">master</span>
-              <span className="text-zinc-400 text-sm ml-2">— {t.onboarding.becomeMaster}</span>
+            <span className="flex-1 flex items-center justify-center gap-2">
+              <Logo size="sm" />
+              <span className="text-zinc-400 text-sm">— {t.onboarding.becomeMaster}</span>
             </span>
             <div className="flex items-center gap-2">
               <LanguageSwitcher />

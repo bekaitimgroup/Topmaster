@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LogoMark } from '@/components/Logo';
 
 export default function AccessPage() {
   const router = useRouter();
@@ -33,12 +34,9 @@ export default function AccessPage() {
   return (
     <div className="min-h-screen bg-[#0D0D1A] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold mb-1">
-            <span className="text-white">top</span>
-            <span className="text-[#F59E0B]">master</span>
-          </h1>
-          <p className="text-white/40 text-sm mt-2">Beta • Yopiq kirish</p>
+        <div className="text-center mb-10 flex flex-col items-center gap-3">
+          <LogoMark size={56} />
+          <p className="text-white/40 text-sm">Beta • Yopiq kirish</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

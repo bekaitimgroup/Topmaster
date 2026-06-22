@@ -5,6 +5,7 @@ import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Logo from '@/components/Logo';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const TG_BOT_NAME      = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
@@ -138,10 +139,7 @@ function AuthForm() {
 
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-3xl font-extrabold mb-1">
-            <span className="text-[#7C3AED]">top</span>
-            <span className="text-[#F59E0B]">master</span>
-          </div>
+          <Logo size="lg" className="justify-center" />
           <p className="text-sm text-zinc-500">
             {isRu ? 'Войдите, чтобы продолжить' : 'Davom etish uchun kiring'}
           </p>
