@@ -23,14 +23,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Require login for everything except /auth
-  if (!pathname.startsWith('/auth')) {
-    const token = request.cookies.get('token');
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth', request.url));
-    }
-  }
-
   return NextResponse.next();
 }
 
