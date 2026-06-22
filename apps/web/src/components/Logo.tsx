@@ -35,13 +35,10 @@ export function LogoMark({ size = 40 }: { size?: number }) {
           <stop offset="0%" stopColor="#FCD34D"/>
           <stop offset="100%" stopColor="#F59E0B"/>
         </linearGradient>
-        <filter id={`${uid}sh`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy={s * 0.025} stdDeviation={s * 0.04} floodColor="#4C1D95" floodOpacity="0.4"/>
-        </filter>
       </defs>
 
       {/* Background */}
-      <rect width={s} height={s} rx={rx} fill={`url(#${uid}bg)`} filter={`url(#${uid}sh)`}/>
+      <rect width={s} height={s} rx={rx} fill={`url(#${uid}bg)`}/>
 
       {/* Subtle inner shine */}
       <rect width={s} height={s * 0.5} rx={rx} fill="white" opacity="0.06"/>
