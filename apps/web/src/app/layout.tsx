@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   description:
     "Uy ta'miri, yuk tashish, kuryer, repetitor — topmaster.uz orqali daqiqalarda usta toping yoki usta sifatida ishlang.",
   keywords: "usta topish, uy ta'miri toshkent, topmaster uz, xizmat bozori",
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
