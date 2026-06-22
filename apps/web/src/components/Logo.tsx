@@ -102,7 +102,7 @@ const SIZES = {
 export default function Logo({ size = 'md', variant = 'light', className = '' }: LogoProps) {
   const { mark, text, gap } = SIZES[size];
   return (
-    <div className={`flex items-center select-none ${className}`} style={{ gap }}>
+    <div className={`flex items-center select-none ${className}`} style={{ gap, position: 'relative' }}>
       <LogoMark size={mark} />
       <LogoWordmark fontSize={text} variant={variant} />
     </div>
