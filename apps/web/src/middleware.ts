@@ -1,27 +1,34 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Pages that don't require auth
-const PUBLIC_PATHS = ['/auth'];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths and Next.js internals
+  // Always allow Next.js internals and the access gate itself
   if (
-    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api')
+    pathname === '/access' ||
+    pathname.startsWith('/access/')
   ) {
     return NextResponse.next();
   }
 
-  // If no auth cookie, redirect to /auth
-  const token = request.cookies.get('token');
-  if (!token) {
-    const loginUrl = new URL('/auth', request.url);
-    return NextResponse.redirect(loginUrl);
+  // Step 1: site passphrase gate (when SITE_PASSPHRASE is set)
+  const passphrase = process.env.SITE_PASSPHRASE;
+  if (passphrase) {
+    const siteAccess = request.cookies.get('site_access');
+    if (!siteAccess || siteAccess.value !== passphrase) {
+      return NextResponse.redirect(new URL('/access', request.url));
+    }
+  }
+
+  // Step 2: require login for everything except /auth
+  if (!pathname.startsWith('/auth')) {
+    const token = request.cookies.get('token');
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth', request.url));
+    }
   }
 
   return NextResponse.next();
