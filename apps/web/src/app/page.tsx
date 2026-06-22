@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Logo from '@/components/Logo';
 import { api } from '@/lib/api';
 
 function Navbar() {
@@ -24,10 +25,7 @@ function Navbar() {
   return (
     <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 md:px-12">
       <div className="absolute inset-0 bg-[#0B0B18]/70 backdrop-blur-md border-b border-white/5" />
-      <div className="relative flex items-center gap-1">
-        <span className="text-xl font-extrabold text-white tracking-tight">top</span>
-        <span className="text-xl font-extrabold" style={{ color: '#F59E0B' }}>master</span>
-      </div>
+      <Logo size="sm" variant="dark" />
       <div className="relative hidden md:flex items-center gap-8 text-sm text-white/70">
         {[t.nav.howItWorks, t.nav.categories, t.nav.forMasters].map((l) => (
           <a key={l} href={`#${l}`} className="hover:text-white transition-colors">{l}</a>
@@ -298,9 +296,8 @@ function Footer() {
       <div className="max-w-5xl mx-auto">
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-1 mb-4">
-              <span className="text-xl font-extrabold text-white">top</span>
-              <span className="text-xl font-extrabold text-[#F59E0B]">master</span>
+            <div className="mb-4">
+              <Logo size="sm" variant="dark" />
             </div>
             <p className="text-sm leading-relaxed">{f.desc}</p>
           </div>

@@ -59,7 +59,15 @@ export function LogoMark({ size = 40 }: { size?: number }) {
 }
 
 /* ─── Wordmark ───────────────────────────────────────────────────────────── */
-export function LogoWordmark({ fontSize = 22, className = '' }: { fontSize?: number; className?: string }) {
+export function LogoWordmark({
+  fontSize = 22,
+  variant = 'light',
+  className = '',
+}: {
+  fontSize?: number;
+  variant?: 'light' | 'dark';
+  className?: string;
+}) {
   return (
     <span
       className={className}
@@ -71,7 +79,7 @@ export function LogoWordmark({ fontSize = 22, className = '' }: { fontSize?: num
         userSelect: 'none',
       }}
     >
-      <span style={{ color: '#7C3AED' }}>top</span>
+      <span style={{ color: variant === 'dark' ? '#ffffff' : '#7C3AED' }}>top</span>
       <span style={{ color: '#F59E0B' }}>master</span>
     </span>
   );
@@ -80,6 +88,7 @@ export function LogoWordmark({ fontSize = 22, className = '' }: { fontSize?: num
 /* ─── Full horizontal lockup ─────────────────────────────────────────────── */
 interface LogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'light' | 'dark';
   className?: string;
 }
 
@@ -91,12 +100,12 @@ const SIZES = {
   xl: { mark: 68, text: 36, gap: 16 },
 };
 
-export default function Logo({ size = 'md', className = '' }: LogoProps) {
+export default function Logo({ size = 'md', variant = 'light', className = '' }: LogoProps) {
   const { mark, text, gap } = SIZES[size];
   return (
     <div className={`flex items-center select-none ${className}`} style={{ gap }}>
       <LogoMark size={mark} />
-      <LogoWordmark fontSize={text} />
+      <LogoWordmark fontSize={text} variant={variant} />
     </div>
   );
 }
