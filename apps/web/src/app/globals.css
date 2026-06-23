@@ -18,19 +18,22 @@
   --color-ink:          #0D0D1A;
   --color-muted:        #71717A;
 
-  /* Font */
+  /* Fonts */
+  --font-inter:   'Inter', system-ui, sans-serif;
   --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
-  font-family: var(--font-jakarta);
+  font-family: var(--font-inter);
   color: #0D0D1A;
   background: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+h1, h2, h3, h4 { font-family: var(--font-jakarta); }
 
 /* Gradient text */
 .gradient-text {
@@ -56,6 +59,30 @@ body {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.09);
   backdrop-filter: blur(14px);
+}
+
+/* Entrance animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-up  { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-fade-in  { animation: fadeIn 0.5s ease forwards; }
+
+/* Section reveal (JS-driven) */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: no-preference) {
