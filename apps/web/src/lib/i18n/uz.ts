@@ -19,6 +19,7 @@ const uz = {
     ctaTask: 'Buyurtma berish',
     ctaMaster: 'Usta sifatida ishlash',
     scrollHint: 'Pastga aylantiring',
+    trust: ["🔒 Xavfsiz to'lov", "✓ Tasdiqlangan ustalar", "⚡ 2 soatda javob"],
   },
 
   stats: {

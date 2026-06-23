@@ -166,8 +166,8 @@ function Navbar() {
         <div className="absolute inset-0 bg-[#0B0B18]/80 backdrop-blur-md border-b border-white/5" />
         <Logo size="sm" variant="dark" />
 
-        {/* Desktop links */}
-        <div className="relative hidden md:flex items-center gap-8 text-sm text-white/55">
+        {/* Desktop links — absolutely centered on the full nav width */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-8 text-sm text-white/55">
           {navLinks.map((l) => (
             <a key={l} href={`#${l}`} className="hover:text-white transition-colors duration-200">{l}</a>
           ))}
@@ -299,20 +299,9 @@ function Hero() {
 
       {/* Trust signals */}
       <div className="relative mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-white/30">
-        <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Xavfsiz to&apos;lov
-        </span>
-        <span className="text-white/15 hidden sm:block">·</span>
-        <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Tasdiqlangan ustalar
-        </span>
-        <span className="text-white/15 hidden sm:block">·</span>
-        <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          2 soatda javob
-        </span>
+        {t.hero.trust.map((item, i) => (
+          <span key={i} className="flex items-center gap-1.5">{item}</span>
+        ))}
       </div>
 
       {/* Scroll hint */}
