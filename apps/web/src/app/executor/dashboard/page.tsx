@@ -66,20 +66,24 @@ export default function ExecutorDashboard() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="max-w-2xl mx-auto flex">
           {[
-            { href: '/executor/dashboard', icon: '🏠', label: d.nav.feed,     active: true },
-            { href: '/executor/bids',      icon: '📋', label: d.nav.bids,     active: false },
-            { href: '/executor/earnings',  icon: '💰', label: d.nav.earnings, active: false },
-            { href: '/executor/profile',   icon: '👤', label: d.nav.profile,  active: false },
+            { href: '/executor/dashboard', label: d.nav.feed, active: true,
+              icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+            { href: '/executor/bids',      label: d.nav.bids, active: false,
+              icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+            { href: '/executor/earnings',  label: d.nav.earnings, active: false,
+              icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+            { href: '/executor/profile',   label: d.nav.profile, active: false,
+              icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
           ].map((item) => (
             <Link key={item.href} href={item.href}
-              className={`flex-1 flex flex-col items-center py-3 gap-0.5 transition-colors ${
+              className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
                 item.active ? 'text-[#7C3AED]' : 'text-zinc-400 hover:text-[#7C3AED]'
               }`}>
-              <span className="text-xl">{item.icon}</span>
-              <span className={`text-xs ${item.active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+              {item.icon}
+              <span className={`text-[10px] ${item.active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
               {item.active && <span className="w-1 h-1 rounded-full bg-[#7C3AED]" />}
             </Link>
           ))}

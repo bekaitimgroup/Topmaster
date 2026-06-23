@@ -20,6 +20,7 @@ const uz = {
     ctaMaster: 'Usta sifatida ishlash',
     scrollHint: 'Pastga aylantiring',
     trust: ["🔒 Xavfsiz to'lov", "✓ Tasdiqlangan ustalar", "⚡ 2 soatda javob"],
+    prices: "Santexnik: 80–200K · Tozalash: 150K · Repetitor: 120K so'm/soat",
   },
 
   stats: {
@@ -44,6 +45,7 @@ const uz = {
     title: 'Qaysi xizmat kerak?',
     subtitle: '8 ta asosiy kategoriya, 50+ xizmat turi',
     cta: 'Buyurtma berish →',
+    popular: 'Ommabop',
     items: [
       { emoji: '🔨', name: "Uy ta'miri",        desc: 'Santexnika, elektr, gips' },
       { emoji: '🚛', name: 'Yuk tashish',       desc: "Ko'chirish, yuk tashish" },
@@ -73,11 +75,11 @@ const uz = {
 
   testimonials: {
     sectionLabel: 'Fikrlar',
-    title: 'Ular allaqachon ishlatmoqda',
+    title: 'Haqiqiy odamlar, haqiqiy natijalar',
     items: [
-      { name: 'Dilnoza X.', city: 'Toshkent',  role: 'Mijoz', avatar: 'D', rating: 5, text: "2 soat ichida 5 ta taklif keldi. Santexnikni 80 000 so'mga topib, kechgacha muammo hal bo'ldi." },
-      { name: 'Jasur M.',   city: 'Samarqand', role: 'Usta',  avatar: 'J', rating: 5, text: "Topmaster orqali oyiga 8–12 ta buyurtma olaman. Pul to'g'ridan-to'g'ri keladi, hech qanday muammo yo'q." },
-      { name: 'Shaxlo R.',  city: 'Toshkent',  role: 'Mijoz', avatar: 'S', rating: 5, text: "Xavfsiz to'lov juda qulay — pul ish tugaguncha saqlanadi. Endi doim shundan foydalanaman." },
+      { name: 'Shahlo R.', city: 'Yunusobod, Toshkent', role: 'Mijoz', avatar: 'S', rating: 5, text: "Kech soat 9 da kran sinib qoldi. Ertalab 8 da master keldi — 180 000 so'm, 2 soatda tugatdi. Narxi avvaldan aniq edi, hech qanday ajablanish yo'q." },
+      { name: 'Jasur M.',  city: 'Samarqand',           role: 'Usta',  avatar: 'J', rating: 5, text: "Oyiga 10–12 buyurtma olaman. Biron marta ham pul kech kelmagan. Hamma narsa telefondan — kelishuv, to'lov, muloqot." },
+      { name: 'Nodira X.', city: "Mirzo Ulug'bek, Toshkent", role: 'Mijoz', avatar: 'N', rating: 5, text: "Farzandim uchun ingliz tili repetitorini 3 variantdan tanladim. 150 000 so'm/oy. Uch haftada test topshirdi." },
     ],
   },
 

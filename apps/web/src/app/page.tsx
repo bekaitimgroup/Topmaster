@@ -51,6 +51,93 @@ function useReveal() {
   return ref;
 }
 
+/* ─── Live ticker data ───────────────────────────────────────────────────── */
+
+const TICKER = {
+  uz: [
+    { who: "Jasur B.",    task: "Kran ta'mirlash",       ago: "hozir",   bids: 3 },
+    { who: "Malika X.",   task: "Uy tozalash (3 xona)",  ago: "4 min",   bids: 5 },
+    { who: "Sardor K.",   task: "Yuk ko'chirish",         ago: "7 min",   bids: 4 },
+    { who: "Nozima A.",   task: "Soch kesish",            ago: "12 min",  bids: 6 },
+    { who: "Bobur T.",    task: "Kompyuter ta'miri",      ago: "15 min",  bids: 2 },
+    { who: "Gulnora S.",  task: "Matematika repetitori",  ago: "19 min",  bids: 7 },
+  ],
+  ru: [
+    { who: "Жасур Б.",   task: "Ремонт крана",           ago: "только что", bids: 3 },
+    { who: "Малика Х.",  task: "Уборка (3 комн.)",       ago: "4 мин.",     bids: 5 },
+    { who: "Сардор К.",  task: "Грузоперевозки",         ago: "7 мин.",     bids: 4 },
+    { who: "Нозима А.",  task: "Стрижка",                ago: "12 мин.",    bids: 6 },
+    { who: "Бобур Т.",   task: "Ремонт компьютера",      ago: "15 мин.",    bids: 2 },
+    { who: "Гульнора С.", task: "Репетитор математика",  ago: "19 мин.",    bids: 7 },
+  ],
+};
+
+function LiveTicker() {
+  const { lang } = useLanguage();
+  const [idx, setIdx] = useState(0);
+  const [show, setShow] = useState(true);
+
+  const items = TICKER[lang as keyof typeof TICKER] ?? TICKER.uz;
+  const item  = items[idx];
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setShow(false);
+      setTimeout(() => { setIdx(i => (i + 1) % items.length); setShow(true); }, 350);
+    }, 3200);
+    return () => clearInterval(t);
+  }, [items.length]);
+
+  const bidsLabel = lang === 'ru'
+    ? `${item.bids} предл.`
+    : `${item.bids} taklif`;
+
+  return (
+    <div className="relative mb-7 glass rounded-full pl-3.5 pr-5 py-2 text-xs sm:text-sm max-w-[92vw] sm:max-w-none overflow-hidden">
+      <div className="flex items-center gap-2" style={{ opacity: show ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+        <span className="font-semibold text-white/90 whitespace-nowrap">{item.who}</span>
+        <span className="text-white/25">·</span>
+        <span className="text-white/60 truncate">{item.task}</span>
+        <span className="text-white/25 hidden sm:inline">·</span>
+        <span className="text-white/40 whitespace-nowrap hidden sm:inline">{item.ago}</span>
+        <span className="text-white/25">·</span>
+        <span className="text-emerald-400 font-semibold whitespace-nowrap">{bidsLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Sticky mobile CTA ──────────────────────────────────────────────────── */
+
+function StickyMobileCTA() {
+  const { t } = useLanguage();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 480);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div
+      className={`fixed bottom-0 inset-x-0 z-30 md:hidden transition-all duration-300 pointer-events-none ${show ? 'opacity-100' : 'opacity-0 translate-y-2'}`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      <div className="px-4 pt-6 pb-4 pointer-events-auto" style={{ background: 'linear-gradient(to top, #0B0B18 55%, transparent)' }}>
+        <Link
+          href="/post-task"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-white text-base glow-violet active:scale-[0.98] transition-transform"
+          style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}
+        >
+          {t.nav.postTask} →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Category icons (SVG, no emoji) ────────────────────────────────────── */
 
 function IconRepair({ className }: { className?: string }) {
@@ -261,14 +348,14 @@ function Hero() {
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full opacity-8 blur-[100px] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }} />
 
-      {/* Badge */}
-      <div className="relative mb-7 inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm font-medium text-white/65 animate-fade-in">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        {t.hero.badge}
-      </div>
+      {/* Live ticker — replaces static badge */}
+      <LiveTicker />
 
       {/* Headline */}
-      <h1 className="relative text-[2.75rem] sm:text-6xl md:text-[80px] font-extrabold text-white leading-[1.0] tracking-tight max-w-4xl animate-fade-up">
+      <h1
+        className="relative text-[2.6rem] sm:text-6xl md:text-[80px] font-black text-white leading-[1.0] max-w-4xl animate-fade-up"
+        style={{ letterSpacing: '-0.04em' }}
+      >
         {t.hero.title}{' '}
         <span className="gradient-text">{t.hero.titleHighlight}</span>
         <br className="hidden sm:block" />{' '}
@@ -277,6 +364,10 @@ function Hero() {
 
       <p className="relative mt-5 text-base md:text-xl text-white/45 max-w-md leading-relaxed">
         {t.hero.subtitle}
+      </p>
+
+      <p className="relative mt-2 text-xs sm:text-sm text-white/25 font-inter">
+        {t.hero.prices}
       </p>
 
       {/* CTAs */}
@@ -410,25 +501,71 @@ function HowItWorks() {
 function Categories() {
   const { t } = useLanguage();
   const c = t.categories;
-  const rev = useReveal();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setRevealed(true); obs.disconnect(); }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const featured = c.items[0];
+  const rest     = c.items.slice(1);
+  const featCfg  = CAT_CONFIG[0];
 
   return (
     <section id={t.nav.categories} className="py-20 md:py-24 px-4" style={{ background: '#F8F7FF' }}>
-      <div className="max-w-5xl mx-auto" ref={rev}>
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10 md:mb-14">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">{c.sectionLabel}</span>
           <h2 className="text-3xl md:text-[52px] font-extrabold text-[#0D0D1A] leading-tight">{c.title}</h2>
           <p className="mt-3 text-sm md:text-base text-[#71717A] max-w-xs mx-auto">{c.subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {c.items.map((cat, i) => {
-            const cfg = CAT_CONFIG[i % CAT_CONFIG.length];
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" ref={containerRef}>
+
+          {/* Featured card — spans 2 cols */}
+          <Link
+            href="/post-task"
+            className="col-span-2 group bg-white rounded-2xl p-5 flex items-center gap-4 border border-amber-100 hover:border-amber-300 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+            style={{
+              opacity: revealed ? 1 : 0,
+              transform: revealed ? 'none' : 'translateY(16px)',
+              transition: 'opacity 0.45s ease 0ms, transform 0.45s ease 0ms',
+            }}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+              <featCfg.Icon className="w-7 h-7 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <p className="font-bold text-[#0D0D1A]">{featured.name}</p>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">{c.popular}</span>
+              </div>
+              <p className="text-sm text-[#71717A] line-clamp-1">{featured.desc}</p>
+            </div>
+            <svg className="w-4 h-4 text-zinc-300 group-hover:text-amber-400 transition-colors flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M9 18l6-6-6-6"/></svg>
+          </Link>
+
+          {/* Rest of categories with stagger */}
+          {rest.map((cat, i) => {
+            const cfg = CAT_CONFIG[(i + 1) % CAT_CONFIG.length];
+            const delay = (i + 1) * 55;
             return (
               <Link
                 key={cat.name}
                 href="/post-task"
                 className={`group bg-white rounded-2xl p-4 md:p-5 flex flex-col gap-3 border border-zinc-100 ${cfg.hoverBorder} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98]`}
+                style={{
+                  opacity: revealed ? 1 : 0,
+                  transform: revealed ? 'none' : 'translateY(16px)',
+                  transition: `opacity 0.45s ease ${delay}ms, transform 0.45s ease ${delay}ms`,
+                }}
               >
                 <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
                   <cfg.Icon className={`w-5 h-5 ${cfg.iconCls}`} />
@@ -664,6 +801,7 @@ export default function HomePage() {
       <Testimonials />
       <CtaBanner />
       <Footer />
+      <StickyMobileCTA />
     </>
   );
 }
