@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Request, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
@@ -21,11 +22,13 @@ export class AuthController {
   constructor(private auth: AuthService) {}
 
   @Post('send-otp')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   sendOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.phone);
   }
 
   @Post('verify-otp')
+  @Throttle({ default: { limit: 5, ttl: 300_000 } })
   async verifyOtp(
     @Body() dto: VerifyOtpDto,
     @Res({ passthrough: true }) res: Response,

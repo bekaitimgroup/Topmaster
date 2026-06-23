@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -222,12 +223,19 @@ export class PaymentsService {
 
   private async getStatement(params: any) {
     const { from, to } = params;
+    const fromDate = new Date(from);
+    const toDate   = new Date(to);
+    const daysDiff = (toDate.getTime() - fromDate.getTime()) / 86_400_000;
+    if (daysDiff < 0 || daysDiff > 93) {
+      throw this.paymeError(PAYME_ERR.ORDER_NOT_FOUND); // closest valid Payme error
+    }
     const payments = await this.prisma.payment.findMany({
       where: {
         paymentMethod: 'payme',
         externalTransactionId: { not: null },
-        createdAt: { gte: new Date(from), lte: new Date(to) },
+        createdAt: { gte: fromDate, lte: toDate },
       },
+      take: 1000,
     });
 
     return {
@@ -289,10 +297,16 @@ export class PaymentsService {
 
   private verifyAuth(header: string | undefined): boolean {
     if (!header?.startsWith('Basic ')) return false;
-    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
-    // Format: "Paycom:{KEY}"
+    const decoded  = Buffer.from(header.slice(6), 'base64').toString('utf8');
     const expected = `Paycom:${this.paymeKey}`;
-    return decoded === expected;
+    // timingSafeEqual prevents timing attacks on credential comparison
+    try {
+      const a = Buffer.alloc(Math.max(decoded.length, expected.length));
+      const b = Buffer.alloc(Math.max(decoded.length, expected.length));
+      a.write(decoded);
+      b.write(expected);
+      return timingSafeEqual(a, b) && decoded.length === expected.length;
+    } catch { return false; }
   }
 
   private buildPaymeUrl(paymentId: string, amountUzs: number): string {

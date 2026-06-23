@@ -8,7 +8,13 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 
-@WebSocketGateway({ cors: { origin: '*' }, namespace: '/tasks' })
+@WebSocketGateway({
+  cors: {
+    origin: (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(',').map((o) => o.trim()),
+    credentials: true,
+  },
+  namespace: '/tasks',
+})
 export class TasksGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 

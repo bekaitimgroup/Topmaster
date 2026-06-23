@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -42,12 +43,14 @@ export class TasksController {
     @Query('budgetMax') budgetMax?: string,
     @Query('page') page?: string,
   ) {
+    if (req.user.role !== 'executor') throw new ForbiddenException('Only executors can access the task feed');
+    const pageNum = Math.min(Math.max(page ? Number(page) : 1, 1), 500);
     return this.tasks.getFeed(req.user.id, {
       categoryId,
       district,
       budgetMin: budgetMin ? Number(budgetMin) : undefined,
       budgetMax: budgetMax ? Number(budgetMax) : undefined,
-      page: page ? Number(page) : 1,
+      page: pageNum,
     });
   }
 
