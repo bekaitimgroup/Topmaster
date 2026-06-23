@@ -10,15 +10,15 @@ import Logo from '@/components/Logo';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const TG_BOT_NAME      = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
 
-const BTN   = 'w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100';
+const BTN   = 'w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed';
 const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 
 function Divider({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-px bg-zinc-200" />
-      <span className="text-xs text-zinc-400 font-medium">{text}</span>
-      <div className="flex-1 h-px bg-zinc-200" />
+    <div className="flex items-center gap-3 py-1">
+      <div className="flex-1 h-px bg-zinc-100" />
+      <span className="text-xs text-zinc-400">{text}</span>
+      <div className="flex-1 h-px bg-zinc-100" />
     </div>
   );
 }
@@ -32,7 +32,7 @@ function GoogleButton({ onSuccess, label }: { onSuccess: (token: string) => void
     <button
       type="button"
       onClick={() => login()}
-      className={BTN + ' border-2 border-zinc-200 bg-white text-[#3c4043] flex items-center justify-center gap-3'}
+      className={BTN + ' border border-zinc-200 bg-white text-[#3c4043] flex items-center justify-center gap-3'}
     >
       <GoogleIcon />
       {label}
@@ -41,11 +41,11 @@ function GoogleButton({ onSuccess, label }: { onSuccess: (token: string) => void
 }
 
 function AuthForm() {
-  const router      = useRouter();
-  const params      = useSearchParams();
-  const redirect    = params.get('redirect') || '/';
-  const { lang }    = useLanguage();
-  const isRu        = lang === 'ru';
+  const router   = useRouter();
+  const params   = useSearchParams();
+  const redirect = params.get('redirect') || '/';
+  const { lang } = useLanguage();
+  const isRu     = lang === 'ru';
 
   const [step, setStep]         = useState<'phone' | 'code'>('phone');
   const [phone, setPhone]       = useState('+998');
@@ -61,7 +61,6 @@ function AuthForm() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Load Telegram widget into hidden div; expose global callback
   useEffect(() => {
     (window as any).onTelegramAuth = async (user: Record<string, unknown>) => {
       setLoading(true); setError('');
@@ -71,7 +70,6 @@ function AuthForm() {
       } catch (e: any) { setError(e.message); }
       finally { setLoading(false); }
     };
-
     if (!TG_BOT_NAME) return;
     const container = document.getElementById('tg-widget');
     if (!container || container.childNodes.length > 0) return;
@@ -87,11 +85,8 @@ function AuthForm() {
 
   function handleTelegramClick() {
     const btn = document.querySelector('#tg-widget a') as HTMLElement | null;
-    if (btn) {
-      btn.click();
-    } else {
-      setError(isRu ? 'Telegram ещё загружается, попробуйте снова' : "Telegram yuklanmoqda, qayta urinib ko'ring");
-    }
+    if (btn) btn.click();
+    else setError(isRu ? 'Telegram ещё загружается, попробуйте снова' : "Telegram yuklanmoqda, qayta urinib ko'ring");
   }
 
   async function onGoogleSuccess(accessToken: string) {
@@ -129,23 +124,28 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F7FF] flex flex-col items-center justify-center px-4">
-      {/* Hidden Telegram widget — button programmatically clicked */}
+    <div className="relative min-h-screen bg-[#F8F7FF] flex flex-col overflow-x-hidden">
+      {/* Hidden Telegram widget */}
       <div id="tg-widget" className="hidden" />
 
-      <div className="absolute top-4 right-4">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div />
         <LanguageSwitcher />
       </div>
 
-      <div className="w-full max-w-sm">
+      {/* Main content — flex-1 so it vertically centers in remaining space */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        {/* Logo + subtitle */}
         <div className="text-center mb-8">
-          <Logo size="lg" className="justify-center" />
+          <Logo size="lg" className="justify-center mb-3" />
           <p className="text-sm text-zinc-500">
             {isRu ? 'Войдите, чтобы продолжить' : 'Davom etish uchun kiring'}
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-zinc-100 p-6 space-y-3">
+        {/* Card */}
+        <div className="w-full max-w-sm bg-white rounded-3xl shadow-sm border border-zinc-100 p-5 space-y-3">
 
           {/* Google */}
           {GOOGLE_CLIENT_ID ? (
@@ -154,7 +154,7 @@ function AuthForm() {
               label={isRu ? 'Войти через Google' : 'Google orqali kirish'}
             />
           ) : (
-            <button disabled className={BTN + ' border-2 border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
+            <button disabled className={BTN + ' border border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
               <GoogleIcon />
               {isRu ? 'Google (не настроен)' : 'Google (sozlanmagan)'}
             </button>
@@ -173,7 +173,7 @@ function AuthForm() {
               {isRu ? 'Войти через Telegram' : 'Telegram orqali kirish'}
             </button>
           ) : (
-            <button disabled className={BTN + ' border-2 border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
+            <button disabled className={BTN + ' border border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
               <TelegramIcon />
               {isRu ? 'Telegram (не настроен)' : 'Telegram (sozlanmagan)'}
             </button>
@@ -181,7 +181,7 @@ function AuthForm() {
 
           <Divider text={isRu ? 'или по номеру телефона' : 'yoki telefon raqam orqali'} />
 
-          {/* Phone OTP */}
+          {/* Phone OTP flow */}
           {step === 'phone' ? (
             <>
               <div>
@@ -204,7 +204,7 @@ function AuthForm() {
                   autoFocus
                 />
               </div>
-              {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+              {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
               <button
                 onClick={sendOtp}
                 disabled={loading || phone.length < 13}
@@ -216,7 +216,7 @@ function AuthForm() {
             </>
           ) : (
             <>
-              <div className="text-center">
+              <div className="text-center py-1">
                 <p className="text-xs text-zinc-400">{isRu ? 'Код отправлен на' : 'Kod yuborildi:'}</p>
                 <p className="font-bold text-sm text-[#0D0D1A]">{phone}</p>
               </div>
@@ -239,7 +239,7 @@ function AuthForm() {
                   autoComplete="one-time-code"
                 />
               </div>
-              {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+              {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
               <button
                 onClick={verifyCode}
                 disabled={loading || code.length !== 6}
@@ -248,16 +248,16 @@ function AuthForm() {
               >
                 {loading ? '...' : (isRu ? 'Войти' : 'Kirish')}
               </button>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center pt-1">
                 <button onClick={() => { setStep('phone'); setCode(''); setError(''); }}
                   className="text-xs text-zinc-500 hover:text-[#7C3AED] transition-colors">
-                  ← {isRu ? 'Изменить номер' : "Raqamni o'zgartirish"}
+                  ← {isRu ? 'Изменить' : "O'zgartirish"}
                 </button>
                 {cooldown > 0 ? (
                   <span className="text-xs text-zinc-400">{cooldown}s</span>
                 ) : (
                   <button onClick={() => { sendOtp(); setCode(''); }}
-                    className="text-xs text-[#7C3AED] hover:opacity-80">
+                    className="text-xs text-[#7C3AED] font-medium">
                     {isRu ? 'Отправить снова' : 'Qayta yuborish'}
                   </button>
                 )}
@@ -266,7 +266,7 @@ function AuthForm() {
           )}
         </div>
 
-        <p className="text-xs text-center text-zinc-400 mt-5">
+        <p className="text-xs text-center text-zinc-400 mt-5 max-w-xs">
           {isRu ? 'Входя, вы соглашаетесь с условиями использования' : 'Kirib, foydalanish shartlariga rozisiz'}
         </p>
       </div>
@@ -276,7 +276,7 @@ function AuthForm() {
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 48 48">
+    <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -287,7 +287,7 @@ function GoogleIcon() {
 
 function TelegramIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
       <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.02 9.531c-.148.658-.537.818-1.088.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.54 14.4l-2.95-.924c-.641-.2-.654-.641.136-.948l11.527-4.448c.534-.193 1.001.13.309.167z"/>
     </svg>
   );
