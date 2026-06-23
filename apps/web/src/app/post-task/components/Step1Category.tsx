@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import CarPicker from './CarPicker';
 
 const V = "0 0 24 24";
-const S = { fill: "none", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+const S = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 const W = 20;
 
 interface CatCfg { bg: string; Icon: () => React.ReactElement }
