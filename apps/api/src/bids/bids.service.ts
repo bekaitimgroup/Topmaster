@@ -5,11 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateBidDto } from './dto/create-bid.dto';
 
 @Injectable()
 export class BidsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async submit(userId: string, dto: CreateBidDto) {
     const task = await this.prisma.task.findUnique({
@@ -85,6 +89,13 @@ export class BidsService {
       });
     }
 
+    // Notify customer: new bid arrived
+    this.notifications.send(task.customerId, {
+      title: 'Yangi taklif! 📨',
+      body: `"${task.title}" uchun yangi taklif keldi`,
+      data: { taskId: task.id, type: 'new_bid' },
+    });
+
     return this.serializeBid(bid);
   }
 
@@ -112,6 +123,19 @@ export class BidsService {
         },
       }),
     ]);
+
+    // Notify executor: bid accepted
+    const executor = await this.prisma.executorProfile.findUnique({
+      where: { id: bid.executorId },
+      select: { userId: true },
+    });
+    if (executor) {
+      this.notifications.send(executor.userId, {
+        title: 'Taklifingiz qabul qilindi! ✅',
+        body: `"${bid.task.title}" vazifasi uchun tanlandingiz`,
+        data: { taskId: bid.taskId, type: 'bid_accepted' },
+      });
+    }
 
     return { success: true };
   }

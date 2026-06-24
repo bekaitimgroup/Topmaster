@@ -92,6 +92,7 @@ model User {
   googleId         String?  @unique @map("google_id")
   isPhoneVerified  Boolean  @default(false) @map("is_phone_verified")
   isActive         Boolean  @default(true) @map("is_active")
+  fcmToken         String?  @map("fcm_token")
   createdAt        DateTime @default(now()) @map("created_at")
 
   executorProfile  ExecutorProfile?

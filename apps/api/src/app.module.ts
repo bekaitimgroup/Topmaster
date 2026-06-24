@@ -16,6 +16,7 @@ import { AdminModule } from './admin/admin.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { FilesModule } from './files/files.module';
 import { CarsModule } from './cars/cars.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CarsModule } from './cars/cars.module';
     SubscriptionsModule,
     FilesModule,
     CarsModule,
+    NotificationsModule,
   ],
   providers: [
     // Apply rate limiting globally
