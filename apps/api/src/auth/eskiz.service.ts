@@ -31,8 +31,11 @@ export class EskizService {
     const token = await this.getToken();
 
     if (!token) {
-      // Dev mode: log OTP to console when Eskiz is not configured
-      this.logger.warn(`[DEV] OTP for ${phone}: ${code}`);
+      // Dev mode: Eskiz not configured — write OTP only to a local file, never to logs
+      const fs = await import('fs');
+      const line = `${new Date().toISOString()}  ${phone}  ${code}\n`;
+      fs.appendFileSync('/tmp/topmaster_dev_otp.txt', line);
+      this.logger.warn(`[DEV] OTP written to /tmp/topmaster_dev_otp.txt (Eskiz not configured)`);
       return;
     }
 

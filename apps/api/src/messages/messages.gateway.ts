@@ -61,6 +61,14 @@ export class MessagesGateway implements OnGatewayConnection {
   ) {
     if (!isValidUuid(data.taskId) || !isValidUuid(data.partnerId)) return;
 
+    // Verify this user is actually allowed in this chat thread before joining the room
+    try {
+      await this.messages.getThread(data.taskId, socket.data.userId, data.partnerId);
+    } catch {
+      socket.emit('error', { message: 'Forbidden' });
+      return;
+    }
+
     const room = chatRoom(data.taskId, socket.data.userId, data.partnerId);
     socket.join(room);
     socket.data.activeRoom = room;

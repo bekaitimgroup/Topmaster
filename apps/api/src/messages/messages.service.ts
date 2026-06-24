@@ -6,16 +6,24 @@ export class MessagesService {
   constructor(private prisma: PrismaService) {}
 
   async getThread(taskId: string, userId: string, partnerId: string) {
-    // Verify the requester is allowed to see this thread
     const task = await this.prisma.task.findUnique({ where: { id: taskId } });
     if (!task) throw new NotFoundException();
 
     const isCustomer = task.customerId === userId;
-    const profile = isCustomer
-      ? null
-      : await this.prisma.executorProfile.findUnique({ where: { userId } });
 
-    if (!isCustomer && !profile) throw new ForbiddenException();
+    if (!isCustomer) {
+      // Executor must have an actual bid on this specific task
+      const profile = await this.prisma.executorProfile.findUnique({ where: { userId } });
+      if (!profile) throw new ForbiddenException();
+
+      const hasBid = await this.prisma.bid.findFirst({
+        where: { taskId, executorId: profile.id },
+      });
+      if (!hasBid) throw new ForbiddenException();
+    } else {
+      // Customer must own this task
+      if (task.customerId !== userId) throw new ForbiddenException();
+    }
 
     const messages = await this.prisma.message.findMany({
       where: {

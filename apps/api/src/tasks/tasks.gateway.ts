@@ -25,7 +25,15 @@ export class TasksGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(socket: Socket) {
     try {
+      const cookieHeader = socket.handshake.headers?.cookie ?? '';
+      const cookieToken = cookieHeader
+        .split(';')
+        .map((c) => c.trim())
+        .find((c) => c.startsWith('token='))
+        ?.slice('token='.length);
+
       const token =
+        cookieToken ??
         (socket.handshake.auth?.token as string) ??
         (socket.handshake.query?.token as string);
 
