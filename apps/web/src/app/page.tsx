@@ -29,7 +29,7 @@ function useCountUp(end: number, decimals = 0) {
       };
       requestAnimationFrame(tick);
       obs.disconnect();
-    }, { threshold: 0.5 });
+    }, { threshold: 0.15 });
     obs.observe(el);
     return () => obs.disconnect();
   }, [end, decimals]);
@@ -433,7 +433,7 @@ function StatsBar() {
     { label: s.masters.label, spanRef: masters.ref, display: `${masters.val.toLocaleString()}+` },
     { label: s.tasks.label,   spanRef: tasks.ref,   display: `${tasks.val.toLocaleString()}+`   },
     { label: s.rating.label,  spanRef: rating.ref,  display: `${rating.val.toFixed(1)}★`        },
-    { label: s.cities.label,  spanRef: cities.ref,  display: `${cities.val} ta`                 },
+    { label: s.cities.label,  spanRef: cities.ref,  display: `${cities.val}`                    },
   ];
 
   return (
