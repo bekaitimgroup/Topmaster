@@ -27,7 +27,7 @@ const uz = {
     masters: { value: '2 000+', label: 'Faol usta' },
     tasks:   { value: '15 000+', label: 'Bajarilgan buyurtma' },
     rating:  { value: '4.8★', label: "O'rtacha baho" },
-    cities:  { value: '12 ta', label: 'Shahar' },
+    cities:  { value: '12', label: 'Shahar' },
   },
 
   how: {
