@@ -388,8 +388,21 @@ function Hero() {
         </Link>
       </div>
 
+      {/* Intro video link */}
+      <Link
+        href="/intro"
+        className="relative mt-5 inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors group"
+      >
+        <span className="w-7 h-7 rounded-full flex items-center justify-center border border-white/15 group-hover:border-white/30 transition-colors">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M3 2l5 3-5 3V2z"/>
+          </svg>
+        </span>
+        О проекте
+      </Link>
+
       {/* Trust signals */}
-      <div className="relative mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-white/30">
+      <div className="relative mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-white/30">
         {t.hero.trust.map((item, i) => (
           <span key={i} className="flex items-center gap-1.5">{item}</span>
         ))}
