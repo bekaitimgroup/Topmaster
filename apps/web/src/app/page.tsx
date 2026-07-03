@@ -16,8 +16,8 @@ function useCountUp(end: number, decimals = 0) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting || ran.current) return;
+    const start = () => {
+      if (ran.current) return;
       ran.current = true;
       const dur = 1800;
       const t0 = performance.now();
@@ -28,8 +28,17 @@ function useCountUp(end: number, decimals = 0) {
         if (p < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
+    };
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      start();
+      return;
+    }
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      start();
       obs.disconnect();
-    }, { threshold: 0.15 });
+    }, { threshold: 0.1 });
     obs.observe(el);
     return () => obs.disconnect();
   }, [end, decimals]);
