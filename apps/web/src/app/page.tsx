@@ -12,14 +12,9 @@ import { api } from '@/lib/api';
 function useCountUp(end: number, decimals = 0) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
-  const ran = useRef(false);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const start = () => {
-      if (ran.current) return;
-      ran.current = true;
-      const dur = 1800;
+    const timer = setTimeout(() => {
+      const dur = 1600;
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0) / dur, 1);
@@ -28,24 +23,8 @@ function useCountUp(end: number, decimals = 0) {
         if (p < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-    };
-    const tryStart = () => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        start();
-        return true;
-      }
-      return false;
-    };
-    if (tryStart()) return;
-    // Fallback: retry after paint in case layout not settled
-    const t = setTimeout(() => { if (!tryStart()) obs.observe(el); }, 300);
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      start();
-      obs.disconnect();
-    }, { threshold: 0.1 });
-    return () => { clearTimeout(t); obs.disconnect(); };
+    }, 400);
+    return () => clearTimeout(timer);
   }, [end, decimals]);
   return { val, ref };
 }
