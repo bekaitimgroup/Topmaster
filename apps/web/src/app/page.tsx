@@ -29,18 +29,23 @@ function useCountUp(end: number, decimals = 0) {
       };
       requestAnimationFrame(tick);
     };
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight && rect.bottom > 0) {
-      start();
-      return;
-    }
+    const tryStart = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        start();
+        return true;
+      }
+      return false;
+    };
+    if (tryStart()) return;
+    // Fallback: retry after paint in case layout not settled
+    const t = setTimeout(() => { if (!tryStart()) obs.observe(el); }, 300);
     const obs = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       start();
       obs.disconnect();
     }, { threshold: 0.1 });
-    obs.observe(el);
-    return () => obs.disconnect();
+    return () => { clearTimeout(t); obs.disconnect(); };
   }, [end, decimals]);
   return { val, ref };
 }
