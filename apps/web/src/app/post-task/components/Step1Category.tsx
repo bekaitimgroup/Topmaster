@@ -146,6 +146,20 @@ export default function Step1Category({ value, onChange, onNext }: Props) {
     api.categories.list().then(setCategories).finally(() => setLoading(false));
   }, []);
 
+  // Re-sync stored names when language changes
+  useEffect(() => {
+    if (!value.categoryId || categories.length === 0) return;
+    const cat = categories.find(c => c.id === value.categoryId);
+    if (!cat) return;
+    const sub = value.subcategoryId ? (cat.children ?? []).find(s => s.id === value.subcategoryId) : null;
+    onChange({
+      ...value,
+      categoryName: lang === 'ru' ? cat.nameRu : cat.nameUz,
+      subcategoryName: sub ? (lang === 'ru' ? sub.nameRu : sub.nameUz) : value.subcategoryName,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang, categories]);
+
   const selectedCat = categories.find((c) => c.id === value.categoryId) ?? null;
   const isAutoService = selectedCat?.nameRu === 'Автосервис';
   const children: SubCategory[] = selectedCat?.children ?? [];
@@ -243,7 +257,7 @@ export default function Step1Category({ value, onChange, onNext }: Props) {
                 <span className="text-xs text-zinc-400 mt-0.5">
                   {cat.executorCount > 0
                     ? `${cat.executorCount}+ ${s.executors}`
-                    : (lang === 'ru' ? cat.nameUz : cat.nameRu)}
+                    : (lang === 'ru' ? cat.nameRu : cat.nameUz)}
                 </span>
               </button>
             ))}
