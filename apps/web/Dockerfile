@@ -1,10 +1,9 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 RUN npm install -g pnpm
-COPY package.json ./
-RUN pnpm install --no-frozen-lockfile
-ARG CACHEBUST=2
+
 COPY . .
+RUN pnpm install --no-frozen-lockfile
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
