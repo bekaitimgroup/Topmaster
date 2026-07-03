@@ -217,6 +217,31 @@ function IconSettings({ className }: { className?: string }) {
   );
 }
 
+function IconCamera({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  );
+}
+function IconHeart({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  );
+}
+function IconHardHat({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z"/>
+      <path d="M10 10V5a2 2 0 1 1 4 0v5"/>
+      <path d="M4 15v-3a8 8 0 0 1 16 0v3"/>
+    </svg>
+  );
+}
+
 const CAT_CONFIG = [
   { Icon: IconRepair,   bg: 'bg-amber-50',   iconCls: 'text-amber-600',  hoverBorder: 'group-hover:border-amber-200'  },
   { Icon: IconTruck,    bg: 'bg-sky-50',      iconCls: 'text-sky-600',    hoverBorder: 'group-hover:border-sky-200'    },
@@ -226,6 +251,9 @@ const CAT_CONFIG = [
   { Icon: IconScissors, bg: 'bg-rose-50',     iconCls: 'text-rose-600',   hoverBorder: 'group-hover:border-rose-200'   },
   { Icon: IconMonitor,  bg: 'bg-slate-50',    iconCls: 'text-slate-600',  hoverBorder: 'group-hover:border-slate-200'  },
   { Icon: IconSettings, bg: 'bg-orange-50',   iconCls: 'text-orange-600', hoverBorder: 'group-hover:border-orange-200' },
+  { Icon: IconCamera,   bg: 'bg-pink-50',     iconCls: 'text-pink-600',   hoverBorder: 'group-hover:border-pink-200'   },
+  { Icon: IconSparkles, bg: 'bg-green-50',    iconCls: 'text-green-600',  hoverBorder: 'group-hover:border-green-200'  },
+  { Icon: IconHardHat,  bg: 'bg-yellow-50',   iconCls: 'text-yellow-600', hoverBorder: 'group-hover:border-yellow-200' },
 ];
 
 /* ─── Navbar ─────────────────────────────────────────────────────────────── */

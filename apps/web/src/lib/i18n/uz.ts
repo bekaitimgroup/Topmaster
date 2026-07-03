@@ -43,7 +43,7 @@ const uz = {
   categories: {
     sectionLabel: 'Xizmatlar',
     title: 'Qaysi xizmat kerak?',
-    subtitle: '8 ta asosiy kategoriya, 50+ xizmat turi',
+    subtitle: '11 ta kategoriya, 50+ xizmat turi',
     cta: 'Buyurtma berish →',
     popular: 'Ommabop',
     items: [
@@ -55,6 +55,9 @@ const uz = {
       { emoji: '💄', name: "Go'zallik",         desc: 'Soch, make-up, tirnoq' },
       { emoji: '💻', name: 'Kompyuter',         desc: "Ta'mirlash, o'rnatish" },
       { emoji: '⚙️', name: "Texnika ta'miri",  desc: 'Kir yuvish, sovutgich' },
+      { emoji: '📸', name: 'Fotograf',          desc: "To'y, portret, tadbirlar" },
+      { emoji: '🌿', name: "Bog' ishlari",      desc: "Maysazor, daraxt, tozalash" },
+      { emoji: '🏗️', name: 'Qurilish',         desc: "Devor, pol, shift, fasad" },
     ],
   },
 
