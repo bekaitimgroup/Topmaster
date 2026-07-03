@@ -3,6 +3,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 COPY package.json ./
 RUN pnpm install --no-frozen-lockfile
+ARG CACHEBUST=1
 COPY . .
 
 ARG NEXT_PUBLIC_API_URL
