@@ -13,6 +13,7 @@ function useCountUp(end: number, decimals = 0) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
+    let rafId: number;
     const timer = setTimeout(() => {
       const dur = 1600;
       const t0 = performance.now();
@@ -20,11 +21,11 @@ function useCountUp(end: number, decimals = 0) {
         const p = Math.min((now - t0) / dur, 1);
         const eased = 1 - Math.pow(1 - p, 3);
         setVal(parseFloat((eased * end).toFixed(decimals)));
-        if (p < 1) requestAnimationFrame(tick);
+        if (p < 1) { rafId = requestAnimationFrame(tick); }
       };
-      requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
     }, 400);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); cancelAnimationFrame(rafId); };
   }, [end, decimals]);
   return { val, ref };
 }
@@ -475,8 +476,13 @@ function StatsBar() {
 
   useEffect(() => {
     api.stats.get()
-      .then((data) => setStats(data))
-      .catch(() => {}); // keep fallback values if API is unavailable
+      .then((data) => setStats(prev => ({
+        executorCount: Math.max(prev.executorCount, data.executorCount),
+        taskCount:     Math.max(prev.taskCount,     data.taskCount),
+        avgRating:     Math.max(prev.avgRating,     data.avgRating),
+        cityCount:     Math.max(prev.cityCount,     data.cityCount),
+      })))
+      .catch(() => {});
   }, []);
 
   const masters = useCountUp(stats.executorCount);
