@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProgressBar from './components/ProgressBar';
 import Step1Category from './components/Step1Category';
@@ -65,6 +65,8 @@ interface FormState {
   paymentMethod: string;
 }
 
+const DRAFT_KEY = 'topmaster_draft';
+
 const INITIAL: FormState = {
   categoryId: '', categoryName: '', subcategoryId: '', subcategoryName: '', title: '',
   carMakeId: '', carMakeName: '', carModelId: '', carModelName: '', carYear: '',
@@ -82,6 +84,27 @@ export default function PostTaskPage() {
   const [form, setForm] = useState<FormState>(INITIAL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Restore draft from localStorage on mount (photos are not persisted)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        setForm((f) => ({ ...f, ...draft, photos: [] }));
+      }
+    } catch {}
+  }, []);
+
+  // Save draft to localStorage on change (debounced, without File objects)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...form, photos: undefined }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form]);
 
   if (!checked) {
     return (
@@ -118,6 +141,7 @@ export default function PostTaskPage() {
       form.photos.forEach((f) => fd.append('photos', f));
 
       const task = await api.tasks.create(fd);
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
       router.push(`/tasks/${task.id}?new=1`);
     } catch (e: any) {
       setError(e.message ?? 'Xatolik yuz berdi');

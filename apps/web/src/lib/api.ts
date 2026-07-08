@@ -48,6 +48,9 @@ export const api = {
   categories: {
     list: () => request<Category[]>('/categories'),
   },
+  stats: {
+    get: () => request<Stats>('/stats'),
+  },
   cars: {
     makes: () => request<CarMake[]>('/cars/makes'),
     models: (makeId: string) => request<CarModel[]>(`/cars/makes/${makeId}/models`),
@@ -66,6 +69,13 @@ export const api = {
       request<Plan[]>(`/executor/plans?categoryId=${categoryId}`),
   },
 };
+
+export interface Stats {
+  executorCount: number;
+  taskCount: number;
+  avgRating: number;
+  cityCount: number;
+}
 
 export interface SubCategory {
   id: string;

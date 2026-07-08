@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import HtmlLang from "@/components/HtmlLang";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -20,7 +21,6 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
@@ -40,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="uz" className={`${jakarta.variable} ${inter.variable} antialiased`}>
       <body className="min-h-screen bg-white text-[#0D0D1A] font-inter">
         <LanguageProvider>
+          <HtmlLang />
           {children}
         </LanguageProvider>
       </body>

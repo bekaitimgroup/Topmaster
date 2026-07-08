@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, use } from 'react';
+import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import BidCard from './components/BidCard';
 import BidForm from './components/BidForm';
@@ -104,6 +104,29 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => { loadTask(); }, [id]);
   useEffect(() => { if (currentUserId) loadBids(); }, [currentUserId]);
+
+  // Poll for new bids while the task is still waiting on offers
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    const shouldPoll = task && currentUserId
+      && ['published', 'bids_received', 'executor_selected'].includes(task.status);
+    if (!shouldPoll) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${API}/api/tasks/${id}`, withCreds);
+        if (res.ok) setTask(await res.json());
+        loadBids();
+      } catch {}
+    }, 8000);
+
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [task?.status, currentUserId, id]);
 
   async function handleAccept(bidId: string) {
     await fetch(`${API}/api/bids/${bidId}/accept`, { method: 'PATCH', credentials: 'include' });
@@ -259,14 +282,10 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             ) : (
               <>
-                <div className="text-sm text-zinc-600 bg-zinc-50 rounded-xl px-4 py-3 space-y-1">
+                <div className="text-sm text-zinc-600 bg-zinc-50 rounded-xl px-4 py-3">
                   <div className="flex justify-between">
                     <span>{td.escrow.masterPrice}</span>
                     <span className="font-medium">{bids.find(b => b.status === 'accepted')?.priceUzs.toLocaleString() ?? '—'} {t.currency}</span>
-                  </div>
-                  <div className="flex justify-between text-zinc-400">
-                    <span>{td.escrow.commission}</span>
-                    <span>{bids.find(b => b.status === 'accepted') ? Math.round(bids.find(b => b.status === 'accepted')!.priceUzs * 0.1).toLocaleString() : '—'} {t.currency}</span>
                   </div>
                 </div>
                 {payError && (

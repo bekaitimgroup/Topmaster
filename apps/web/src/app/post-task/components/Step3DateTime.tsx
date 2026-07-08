@@ -33,6 +33,10 @@ export default function Step3DateTime({ value, onChange, onNext, onBack }: Props
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  // Live check: selected date+time must be at least 30 minutes in the future
+  const tooSoon = Boolean(value.date && value.time)
+    && new Date(`${value.date}T${value.time}`) < new Date(Date.now() + 30 * 60_000);
+
   function validate() {
     if (!value.date || !value.time) { setError(s.errorRequired); return false; }
     if (new Date(`${value.date}T${value.time}`) < new Date(Date.now() + 30 * 60_000)) {
@@ -99,13 +103,13 @@ export default function Step3DateTime({ value, onChange, onNext, onBack }: Props
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-2xl px-4 py-3">{error}</p>}
+      {(error || tooSoon) && <p className="text-sm text-red-600 bg-red-50 rounded-2xl px-4 py-3">{error || s.errorTooSoon}</p>}
 
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 font-bold text-sm text-zinc-600 hover:bg-zinc-50 transition-all">
           {t.common.back}
         </button>
-        <button disabled={!value.date || !value.time} onClick={() => { if (validate()) onNext(); }}
+        <button disabled={!value.date || !value.time || tooSoon} onClick={() => { if (validate()) onNext(); }}
           className="flex-1 py-4 rounded-2xl text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
           {t.common.next}

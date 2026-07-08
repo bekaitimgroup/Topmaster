@@ -266,7 +266,11 @@ function Navbar() {
     return () => window.removeEventListener('scroll', close);
   }, [mobileOpen]);
 
-  const navLinks = [t.nav.howItWorks, t.nav.categories, t.nav.forMasters];
+  const navLinks = [
+    { label: t.nav.howItWorks, href: '#how-it-works' },
+    { label: t.nav.categories, href: '#categories' },
+    { label: t.nav.forMasters, href: '#for-masters' },
+  ];
 
   return (
     <>
@@ -277,12 +281,20 @@ function Navbar() {
         {/* Desktop links — absolutely centered on the full nav width */}
         <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-8 text-sm text-white/55">
           {navLinks.map((l) => (
-            <a key={l} href={`#${l}`} className="hover:text-white transition-colors duration-200">{l}</a>
+            <a key={l.href} href={l.href} className="hover:text-white transition-colors duration-200">{l.label}</a>
           ))}
         </div>
 
         <div className="relative flex items-center gap-2">
           <LanguageSwitcher variant="dark" />
+          {loggedIn && (
+            <Link
+              href="/my-tasks"
+              className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-white/55 hover:text-white border border-white/20 hover:border-white/40 px-3 py-2 rounded-full transition-all"
+            >
+              {t.nav.myTasks}
+            </Link>
+          )}
           {loggedIn && (
             <button
               onClick={logout}
@@ -329,14 +341,23 @@ function Navbar() {
             <div className="p-3 flex flex-col gap-0.5">
               {navLinks.map((l) => (
                 <a
-                  key={l}
-                  href={`#${l}`}
+                  key={l.href}
+                  href={l.href}
                   onClick={() => setMobileOpen(false)}
                   className="px-4 py-3 rounded-xl text-white/65 hover:text-white hover:bg-white/5 text-sm font-medium transition-all"
                 >
-                  {l}
+                  {l.label}
                 </a>
               ))}
+              {loggedIn && (
+                <Link
+                  href="/my-tasks"
+                  onClick={() => setMobileOpen(false)}
+                  className="px-4 py-3 rounded-xl text-white/65 hover:text-white hover:bg-white/5 text-sm font-medium transition-all"
+                >
+                  {t.nav.myTasks}
+                </Link>
+              )}
               <div className="border-t border-white/8 mt-2 pt-2 grid grid-cols-2 gap-2">
                 <Link href="/post-task" onClick={() => setMobileOpen(false)}
                   className="text-center py-3 rounded-xl font-bold text-white text-sm"
@@ -445,10 +466,23 @@ function StatsBar() {
   const s = t.stats;
   const rev = useReveal();
 
-  const masters = useCountUp(2000);
-  const tasks   = useCountUp(15000);
-  const rating  = useCountUp(4.8, 1);
-  const cities  = useCountUp(12);
+  const [stats, setStats] = useState({
+    executorCount: 2000,
+    taskCount: 15000,
+    avgRating: 4.8,
+    cityCount: 12,
+  });
+
+  useEffect(() => {
+    api.stats.get()
+      .then((data) => setStats(data))
+      .catch(() => {}); // keep fallback values if API is unavailable
+  }, []);
+
+  const masters = useCountUp(stats.executorCount);
+  const tasks   = useCountUp(stats.taskCount);
+  const rating  = useCountUp(stats.avgRating, 1);
+  const cities  = useCountUp(stats.cityCount);
 
   const items = [
     { label: s.masters.label, spanRef: masters.ref, display: `${masters.val.toLocaleString()}+` },
@@ -458,7 +492,7 @@ function StatsBar() {
   ];
 
   return (
-    <div ref={rev} className="bg-[#0B0B18] border-y border-white/5">
+    <div id="stats" ref={rev} className="bg-[#0B0B18] border-y border-white/5">
       <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4">
         {items.map((item, i) => (
           <div key={item.label}
@@ -494,7 +528,7 @@ function HowItWorks() {
   const rev = useReveal();
 
   return (
-    <section id={t.nav.howItWorks} className="py-20 md:py-24 px-4 bg-white">
+    <section id="how-it-works" className="py-20 md:py-24 px-4 bg-white">
       <div className="max-w-5xl mx-auto" ref={rev}>
         <div className="text-center mb-12 md:mb-16">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">{h.sectionLabel}</span>
@@ -553,7 +587,7 @@ function Categories() {
   const featCfg  = CAT_CONFIG[0];
 
   return (
-    <section id={t.nav.categories} className="py-20 md:py-24 px-4" style={{ background: '#F8F7FF' }}>
+    <section id="categories" className="py-20 md:py-24 px-4" style={{ background: '#F8F7FF' }}>
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10 md:mb-14">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">{c.sectionLabel}</span>
@@ -645,7 +679,7 @@ function ForMasters() {
   const rev = useReveal();
 
   return (
-    <section id={t.nav.forMasters} className="py-20 md:py-24 px-4 hero-bg relative overflow-hidden">
+    <section id="for-masters" className="py-20 md:py-24 px-4 hero-bg relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 blur-[120px] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }} />
 
@@ -782,6 +816,13 @@ function CtaBanner() {
 
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
 
+// Hrefs matching f.columns[col].links[row] order (same in both languages)
+const FOOTER_HREFS = [
+  ['/post-task', '#how-it-works', '#'],          // clients: post task, how it works, safe payment
+  ['/onboarding/executor', '#', '#'],            // masters: become a master, tariffs, help center
+  ['/intro', '#', '#'],                          // company: about us, contacts, privacy policy
+];
+
 function Footer() {
   const { t } = useLanguage();
   const f = t.footer;
@@ -796,12 +837,12 @@ function Footer() {
             </div>
             <p className="text-sm leading-relaxed">{f.desc}</p>
           </div>
-          {f.columns.map((col) => (
+          {f.columns.map((col, ci) => (
             <div key={col.title}>
               <p className="text-sm font-bold text-white mb-4">{col.title}</p>
               <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l}><a href="#" className="text-sm hover:text-white/80 transition-colors">{l}</a></li>
+                {col.links.map((l, li) => (
+                  <li key={l}><a href={FOOTER_HREFS[ci]?.[li] ?? '#'} className="text-sm hover:text-white/80 transition-colors">{l}</a></li>
                 ))}
               </ul>
             </div>

@@ -8,6 +8,7 @@ const uz = {
     forMasters: 'Ustalar uchun',
     login: 'Kirish',
     postTask: 'Buyurtma berish',
+    myTasks: 'Buyurtmalarim',
   },
 
   hero: {
@@ -287,6 +288,17 @@ const uz = {
       empty: 'Ustalar takliflarini kutmoqda...',
     },
     reviewDone: '✓ Rahmat! Bahongiz qabul qilindi',
+  },
+
+  myTasks: {
+    title:    'Mening buyurtmalarim',
+    subtitle: 'Siz joylagan barcha buyurtmalar',
+    newTask:  '+ Yangi buyurtma',
+    empty: {
+      title: "Hozircha buyurtmalar yo'q",
+      desc:  "Birinchi buyurtmangizni bering — ustalar takliflarini yuborishadi",
+      cta:   'Buyurtma berish →',
+    },
   },
 
   bidForm: {
