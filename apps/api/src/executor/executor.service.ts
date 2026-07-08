@@ -63,6 +63,13 @@ export class ExecutorService {
       },
     });
 
+    // Persist portfolio photo URLs
+    if (portfolioUrls.length > 0) {
+      await this.prisma.portfolioPhoto.createMany({
+        data: portfolioUrls.map((url) => ({ executorId: userId, url })),
+      });
+    }
+
     // Create free trial subscriptions for each selected category
     const now = new Date();
     const expiresAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
@@ -89,7 +96,18 @@ export class ExecutorService {
       where: { userId },
       include: {
         user: {
-          select: { id: true, phone: true, email: true, fullName: true, avatarUrl: true, role: true },
+          select: {
+            id: true,
+            phone: true,
+            email: true,
+            fullName: true,
+            avatarUrl: true,
+            role: true,
+            portfolio: {
+              select: { id: true, url: true },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
         },
         subscriptions: {
           where: { isActive: true },
@@ -102,6 +120,50 @@ export class ExecutorService {
     return {
       ...profile,
       rating: Number(profile.rating),
+      portfolio: profile.user.portfolio,
+    };
+  }
+
+  async getPublicProfile(userId: string) {
+    const profile = await this.prisma.executorProfile.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+            portfolio: {
+              select: { id: true, url: true },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+        subscriptions: {
+          where: { isActive: true },
+          include: { category: { select: { id: true, nameUz: true, nameRu: true } } },
+        },
+      },
+    });
+    if (!profile) throw new NotFoundException('Profil topilmadi');
+
+    const categories = [
+      ...new Map(profile.subscriptions.map((s) => [s.category.id, s.category])).values(),
+    ];
+
+    return {
+      userId: profile.user.id,
+      fullName: profile.user.fullName,
+      avatarUrl: profile.user.avatarUrl,
+      bio: profile.bio,
+      city: profile.city,
+      badge: profile.badge,
+      idVerified: profile.idVerified,
+      rating: Number(profile.rating),
+      reviewCount: profile.reviewCount,
+      completedTaskCount: profile.completedTaskCount,
+      categories,
+      portfolio: profile.user.portfolio,
     };
   }
 

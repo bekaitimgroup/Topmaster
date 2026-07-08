@@ -18,6 +18,8 @@ export interface FeedQuery {
   district?: string;
   budgetMin?: number;
   budgetMax?: number;
+  search?: string;
+  sortBy?: 'newest' | 'budget_high' | 'budget_low';
   page?: number;
   limit?: number;
 }
@@ -45,43 +47,80 @@ export class TasksService {
     });
     if (!category) throw new NotFoundException('Kategoriya topilmadi');
 
-    const task = await this.prisma.task.create({
-      data: {
-        customerId,
-        categoryId: dto.categoryId,
-        title: dto.title,
-        description: dto.description,
-        addressA: dto.addressA,
-        addressB: dto.addressB,
-        latA: dto.latA ? String(dto.latA) : undefined,
-        lngA: dto.lngA ? String(dto.lngA) : undefined,
-        isRemote: dto.isRemote ?? false,
-        startAt,
-        budgetUzs: dto.budgetUzs ? BigInt(dto.budgetUzs) : null,
-        paymentMethod: dto.paymentMethod,
-        privateInfo: dto.privateInfo,
-        carMakeId: dto.carMakeId,
-        carModelId: dto.carModelId,
-        carYear: dto.carYear,
-        status: 'published',
-      },
-      include: {
-        category: true,
-        customer: {
-          select: { id: true, fullName: true, avatarUrl: true },
+    const task = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.task.create({
+        data: {
+          customerId,
+          categoryId: dto.categoryId,
+          title: dto.title,
+          description: dto.description,
+          addressA: dto.addressA,
+          addressB: dto.addressB,
+          latA: dto.latA ? String(dto.latA) : undefined,
+          lngA: dto.lngA ? String(dto.lngA) : undefined,
+          isRemote: dto.isRemote ?? false,
+          startAt,
+          budgetUzs: dto.budgetUzs ? BigInt(dto.budgetUzs) : null,
+          paymentMethod: dto.paymentMethod,
+          privateInfo: dto.privateInfo,
+          carMakeId: dto.carMakeId,
+          carModelId: dto.carModelId,
+          carYear: dto.carYear,
+          status: 'published',
         },
-      },
+      });
+
+      // Persist uploaded photo URLs
+      if (photoUrls.length > 0) {
+        await tx.taskPhoto.createMany({
+          data: photoUrls.map((url) => ({ taskId: created.id, url })),
+        });
+      }
+
+      return tx.task.findUniqueOrThrow({
+        where: { id: created.id },
+        include: {
+          category: true,
+          customer: {
+            select: { id: true, fullName: true, avatarUrl: true },
+          },
+          photos: { select: { id: true, url: true } },
+        },
+      });
     });
 
     const serialized = this.serializeFeedTask(task);
-    // Broadcast to all executors subscribed to this category
-    this.gateway.broadcastNewTask(dto.categoryId, serialized);
+    // Broadcast to executors subscribed to this subcategory AND to its parent
+    // category — executors subscribe to parent category IDs, while tasks are
+    // usually posted with subcategory IDs.
+    this.gateway.broadcastNewTask(task.categoryId, serialized);
+    if (task.category?.parentId && task.category.parentId !== task.categoryId) {
+      this.gateway.broadcastNewTask(task.category.parentId, serialized);
+    }
 
     return serialized;
   }
 
+  async cancel(customerId: string, taskId: string) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Vazifa topilmadi');
+    if (task.customerId !== customerId) throw new ForbiddenException();
+    if (!['published', 'bids_received', 'executor_selected'].includes(task.status)) {
+      throw new BadRequestException('Bu vazifani bekor qilib bo\'lmaydi');
+    }
+
+    await this.prisma.task.update({
+      where: { id: taskId },
+      data: { status: 'cancelled' },
+    });
+
+    return { success: true };
+  }
+
   async getFeed(userId: string, query: FeedQuery) {
-    const { page = 1, limit = 20, categoryId, district, budgetMin, budgetMax } = query;
+    const { categoryId, district, budgetMin, budgetMax, search, sortBy } = query;
+    const page = Math.max(Math.floor(query.page ?? 1), 1);
+    const limit = Math.min(Math.max(Math.floor(query.limit ?? 20), 1), 50);
 
     // Get executor's subscribed categories
     const profile = await this.prisma.executorProfile.findUnique({
@@ -96,7 +135,9 @@ export class TasksService {
     if (!profile) throw new NotFoundException('Executor profili topilmadi');
 
     const subscribedCategoryIds = profile.subscriptions.map((s) => s.categoryId);
-    if (subscribedCategoryIds.length === 0) return { tasks: [], total: 0 };
+    if (subscribedCategoryIds.length === 0) {
+      return { data: [], tasks: [], total: 0, page, totalPages: 0 };
+    }
 
     // Match tasks whose category is subscribed, OR whose category's parent is subscribed
     // (executors subscribe to parent categories; tasks are posted with subcategory IDs)
@@ -123,6 +164,20 @@ export class TasksService {
     if (budgetMax !== undefined && Number.isFinite(budgetMax) && budgetMax >= 0) {
       where.budgetUzs = { ...where.budgetUzs, lte: BigInt(Math.floor(budgetMax)) };
     }
+    if (search) {
+      const safe = search.trim().slice(0, 100);
+      if (safe) {
+        where.OR = [
+          { title: { contains: safe, mode: 'insensitive' } },
+          { description: { contains: safe, mode: 'insensitive' } },
+        ];
+      }
+    }
+
+    const orderBy =
+      sortBy === 'budget_high' ? { budgetUzs: 'desc' as const } :
+      sortBy === 'budget_low'  ? { budgetUzs: 'asc' as const } :
+      { createdAt: 'desc' as const };
 
     const [tasks, total] = await Promise.all([
       this.prisma.task.findMany({
@@ -130,17 +185,22 @@ export class TasksService {
         include: {
           category: { select: { id: true, nameUz: true, nameRu: true } },
           customer: { select: { id: true, fullName: true, avatarUrl: true } },
+          photos: { select: { id: true, url: true } },
           _count: { select: { bids: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.task.count({ where }),
     ]);
 
+    const serialized = tasks.map(this.serializeFeedTask);
     return {
-      tasks: tasks.map(this.serializeFeedTask),
+      // `data` is the canonical paginated payload; `tasks` kept for
+      // backward compatibility with existing web/mobile clients.
+      data: serialized,
+      tasks: serialized,
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -165,6 +225,7 @@ export class TasksService {
           },
           orderBy: { priceUzs: 'asc' },
         },
+        photos: { select: { id: true, url: true } },
         _count: { select: { bids: true } },
       },
     });
@@ -219,6 +280,7 @@ export class TasksService {
       where: { customerId },
       include: {
         category: true,
+        photos: { select: { id: true, url: true } },
         _count: { select: { bids: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -242,6 +304,7 @@ export class TasksService {
       budgetUzs: task.budgetUzs !== null ? Number(task.budgetUzs) : null,
       paymentMethod: task.paymentMethod,
       status: task.status,
+      photos: task.photos?.map((p: any) => ({ id: p.id, url: p.url })) ?? [],
       bidCount: task._count?.bids ?? 0,
       customer: task.customer
         ? { id: task.customer.id, fullName: task.customer.fullName, avatarUrl: task.customer.avatarUrl }

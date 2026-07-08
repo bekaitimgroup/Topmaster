@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Request,
@@ -39,5 +40,10 @@ export class ExecutorController {
   @Get('plans')
   getPlans(@Query('categoryId') categoryId: string) {
     return this.executor.getPlans(categoryId);
+  }
+
+  @Get(':userId/public')
+  getPublicProfile(@Param('userId') userId: string) {
+    return this.executor.getPublicProfile(userId);
   }
 }

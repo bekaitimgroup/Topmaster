@@ -48,45 +48,66 @@ export class BidsService {
     const sub = profile.subscriptions[0];
     if (!sub) throw new ForbiddenException('Bu kategoriya uchun faol obunangiz yo\'q');
 
-    // Check & deduct bid credit for base plans
-    const isUnlimited = sub.planType.startsWith('unlimited');
-    if (!isUnlimited) {
-      const remaining = sub.bidsTotal - sub.bidsUsed;
-      if (remaining <= 0) throw new BadRequestException('Takliflar soni tugadi. Obunani yangilang');
-      await this.prisma.subscription.update({
-        where: { id: sub.id },
-        data: { bidsUsed: { increment: 1 } },
-      });
-    }
-
-    // Prevent double-bidding
+    // Prevent double-bidding — checked BEFORE any credit is consumed
     const existing = await this.prisma.bid.findFirst({
-      where: { taskId: dto.taskId, executorId: profile.id, status: 'pending' },
+      where: { taskId: dto.taskId, executorId: profile.id },
     });
     if (existing) throw new BadRequestException('Siz allaqachon taklif bergansiz');
 
-    const bid = await this.prisma.bid.create({
-      data: {
-        taskId: dto.taskId,
-        executorId: profile.id,
-        priceUzs: BigInt(dto.priceUzs),
-        message: dto.message,
-        estimatedDurationMins: dto.estimatedDurationMins,
-        availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : undefined,
-      },
-      include: {
-        executor: {
-          include: { user: { select: { fullName: true, avatarUrl: true } } },
-        },
-      },
-    });
+    const isUnlimited = sub.planType.startsWith('unlimited');
 
-    // Bump task status to bids_received
-    if (task.status === 'published') {
-      await this.prisma.task.update({
-        where: { id: dto.taskId },
-        data: { status: 'bids_received' },
+    let bid;
+    try {
+      bid = await this.prisma.$transaction(async (tx) => {
+        // Atomic credit deduction for base plans: the conditional updateMany
+        // guarantees the counter can never exceed bidsTotal under concurrency.
+        if (!isUnlimited) {
+          const deducted = await tx.subscription.updateMany({
+            where: {
+              id: sub.id,
+              isActive: true,
+              bidsUsed: { lt: sub.bidsTotal },
+            },
+            data: { bidsUsed: { increment: 1 } },
+          });
+          if (deducted.count === 0) {
+            throw new BadRequestException('Takliflar soni tugadi. Obunani yangilang');
+          }
+        }
+
+        const created = await tx.bid.create({
+          data: {
+            taskId: dto.taskId,
+            executorId: profile.id,
+            priceUzs: BigInt(dto.priceUzs),
+            message: dto.message,
+            estimatedDurationMins: dto.estimatedDurationMins,
+            availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : undefined,
+          },
+          include: {
+            executor: {
+              include: { user: { select: { fullName: true, avatarUrl: true } } },
+            },
+          },
+        });
+
+        // Bump task status to bids_received
+        if (task.status === 'published') {
+          await tx.task.update({
+            where: { id: dto.taskId },
+            data: { status: 'bids_received' },
+          });
+        }
+
+        return created;
       });
+    } catch (e: any) {
+      // Unique constraint on (taskId, executorId): concurrent duplicate bid.
+      // The transaction rolled back, so the credit deduction was undone too.
+      if (e?.code === 'P2002') {
+        throw new BadRequestException('Siz allaqachon taklif bergansiz');
+      }
+      throw e;
     }
 
     // Notify customer: new bid arrived
@@ -108,6 +129,13 @@ export class BidsService {
     if (bid.task.customerId !== customerId) throw new ForbiddenException();
     if (bid.status !== 'pending') throw new BadRequestException('Bu taklif allaqachon o\'zgartirilgan');
 
+    // For safe_deal tasks the executor is selected and the task waits for the
+    // escrow payment (Payme webhook moves it to in_progress). For direct/b2b
+    // (cash) tasks there is no payment step — go straight to in_progress so
+    // the task can later be completed and reviewed.
+    const nextStatus =
+      bid.task.paymentMethod === 'safe_deal' ? 'executor_selected' : 'in_progress';
+
     // Accept this bid, decline all others
     await this.prisma.$transaction([
       this.prisma.bid.update({ where: { id: bidId }, data: { status: 'accepted' } }),
@@ -118,7 +146,7 @@ export class BidsService {
       this.prisma.task.update({
         where: { id: bid.taskId },
         data: {
-          status: 'executor_selected',
+          status: nextStatus,
           selectedExecutorId: bid.executorId,
         },
       }),

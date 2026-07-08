@@ -104,6 +104,7 @@ model User {
   paymentsAsPayer  Payment[]        @relation("Payer")
   paymentsAsPayee  Payment[]        @relation("Payee")
   disputesOpened   Dispute[]
+  portfolio        PortfolioPhoto[]
 
   @@map("users")
 }
@@ -223,8 +224,36 @@ model Task {
   reviews          Review[]
   messages         Message[]
   disputes         Dispute[]
+  photos           TaskPhoto[]
 
+  @@index([status, categoryId, createdAt])
+  @@index([customerId])
+  @@index([selectedExecutorId])
   @@map("tasks")
+}
+
+model TaskPhoto {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  url       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_photos")
+}
+
+model PortfolioPhoto {
+  id         String   @id @default(uuid())
+  executorId String   @map("executor_id")
+  url        String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  executor User @relation(fields: [executorId], references: [id], onDelete: Cascade)
+
+  @@index([executorId])
+  @@map("portfolio_photos")
 }
 
 model Bid {
@@ -241,6 +270,9 @@ model Bid {
   task     Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
   executor ExecutorProfile @relation(fields: [executorId], references: [id])
 
+  @@unique([taskId, executorId])
+  @@index([taskId])
+  @@index([executorId])
   @@map("bids")
 }
 
@@ -255,6 +287,8 @@ model Payment {
   paymentMethod         PaymentProvider @map("payment_method")
   externalTransactionId String?         @map("external_transaction_id")
   status                PaymentStatus   @default(pending)
+  performedAt           DateTime?       @map("performed_at")
+  cancelledAt           DateTime?       @map("cancelled_at")
   createdAt             DateTime        @default(now()) @map("created_at")
 
   task         Task?         @relation(fields: [taskId], references: [id])
@@ -262,6 +296,7 @@ model Payment {
   payer        User          @relation("Payer", fields: [payerId], references: [id])
   payee        User          @relation("Payee", fields: [payeeId], references: [id])
 
+  @@index([externalTransactionId])
   @@map("payments")
 }
 
@@ -296,6 +331,7 @@ model Message {
   sender    User @relation("MessagesSent", fields: [senderId], references: [id])
   recipient User @relation("MessagesReceived", fields: [recipientId], references: [id])
 
+  @@index([taskId, createdAt])
   @@map("messages")
 }
 

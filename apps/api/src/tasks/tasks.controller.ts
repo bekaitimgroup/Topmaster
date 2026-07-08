@@ -41,16 +41,26 @@ export class TasksController {
     @Query('district') district?: string,
     @Query('budgetMin') budgetMin?: string,
     @Query('budgetMax') budgetMax?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
     @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     if (req.user.role !== 'executor') throw new ForbiddenException('Only executors can access the task feed');
     const pageNum = Math.min(Math.max(page ? Number(page) : 1, 1), 500);
+    const limitNum = Math.min(Math.max(limit ? Number(limit) : 20, 1), 50);
+    const validSort = ['newest', 'budget_high', 'budget_low'].includes(sortBy ?? '')
+      ? (sortBy as 'newest' | 'budget_high' | 'budget_low')
+      : undefined;
     return this.tasks.getFeed(req.user.id, {
       categoryId,
       district,
       budgetMin: budgetMin ? Number(budgetMin) : undefined,
       budgetMax: budgetMax ? Number(budgetMax) : undefined,
+      search,
+      sortBy: validSort,
       page: pageNum,
+      limit: limitNum,
     });
   }
 
@@ -67,5 +77,10 @@ export class TasksController {
   @Patch(':id/complete')
   complete(@Param('id') id: string, @Request() req: any) {
     return this.tasks.complete(req.user.id, id);
+  }
+
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string, @Request() req: any) {
+    return this.tasks.cancel(req.user.id, id);
   }
 }

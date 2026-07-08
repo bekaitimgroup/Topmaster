@@ -44,38 +44,40 @@ export class ReviewsService {
     });
     if (existing) throw new BadRequestException('Siz allaqachon baho qoldirdingiz');
 
-    const review = await this.prisma.review.create({
-      data: {
-        taskId: dto.taskId,
-        reviewerId,
-        revieweeId: resolvedRevieweeId,
-        rating: dto.rating,
-        text: dto.text,
-      },
-      include: {
-        reviewer: { select: { id: true, fullName: true, avatarUrl: true } },
-      },
-    });
-
-    // Update executor rating when customer reviews executor
-    if (isCustomer && task.selectedExecutor) {
-      const ep = await this.prisma.executorProfile.findUnique({
-        where: { id: task.selectedExecutor.id },
-        select: { rating: true, reviewCount: true },
+    // Create the review and recompute the executor rating atomically —
+    // aggregating inside the transaction avoids the read-modify-write race.
+    const review = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.review.create({
+        data: {
+          taskId: dto.taskId,
+          reviewerId,
+          revieweeId: resolvedRevieweeId,
+          rating: dto.rating,
+          text: dto.text,
+        },
+        include: {
+          reviewer: { select: { id: true, fullName: true, avatarUrl: true } },
+        },
       });
-      if (ep) {
-        const oldRating = Number(ep.rating);
-        const oldCount = ep.reviewCount;
-        const newRating = (oldRating * oldCount + dto.rating) / (oldCount + 1);
-        await this.prisma.executorProfile.update({
+
+      // Update executor rating when customer reviews executor
+      if (isCustomer && task.selectedExecutor) {
+        const agg = await tx.review.aggregate({
+          where: { revieweeId: resolvedRevieweeId },
+          _avg: { rating: true },
+          _count: { rating: true },
+        });
+        await tx.executorProfile.update({
           where: { id: task.selectedExecutor.id },
           data: {
-            rating: newRating,
-            reviewCount: { increment: 1 },
+            rating: agg._avg.rating ?? 0,
+            reviewCount: agg._count.rating,
           },
         });
       }
-    }
+
+      return created;
+    });
 
     return review;
   }

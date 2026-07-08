@@ -40,6 +40,14 @@ export class AuthController {
     return { isNewUser: result.isNewUser };
   }
 
+  // Mobile clients cannot use httpOnly cookies — return the token in the body.
+  @Post('verify-otp/mobile')
+  @Throttle({ default: { limit: 5, ttl: 300_000 } })
+  async verifyOtpMobile(@Body() dto: VerifyOtpDto) {
+    const result = await this.auth.verifyOtp(dto.phone, dto.code, dto.role);
+    return { accessToken: result.accessToken, isNewUser: result.isNewUser };
+  }
+
   @Post('telegram')
   async telegramAuth(
     @Body() dto: TelegramAuthDto,

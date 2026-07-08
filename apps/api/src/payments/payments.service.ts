@@ -154,32 +154,36 @@ export class PaymentsService {
     if (!payment) throw this.paymeError(PAYME_ERR.TXN_NOT_FOUND);
 
     if (payment.status === 'released') {
-      return { perform_time: payment.createdAt.getTime(), transaction: paymeId, state: 2 };
+      return {
+        perform_time: (payment.performedAt ?? payment.createdAt).getTime(),
+        transaction: paymeId,
+        state: 2,
+      };
     }
 
     if (payment.status !== 'held') throw this.paymeError(PAYME_ERR.ORDER_BAD_STATE);
 
-    const now = Date.now();
+    const performedAt = new Date();
 
     if (payment.subscriptionId) {
       // Subscription payment
       await this.prisma.$transaction([
-        this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released' } }),
+        this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released', performedAt } }),
         this.prisma.subscription.update({ where: { id: payment.subscriptionId }, data: { isActive: true } }),
       ]);
       this.logger.log(`Subscription payment ${payment.id} released — subscription ${payment.subscriptionId} activated`);
     } else if (payment.taskId) {
       // Task escrow payment
       await this.prisma.$transaction([
-        this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released' } }),
+        this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released', performedAt } }),
         this.prisma.task.update({ where: { id: payment.taskId }, data: { status: 'in_progress' } }),
       ]);
       this.logger.log(`Payment ${payment.id} released — task ${payment.taskId} → in_progress`);
     } else {
-      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released' } });
+      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released', performedAt } });
     }
 
-    return { perform_time: now, transaction: paymeId, state: 2 };
+    return { perform_time: performedAt.getTime(), transaction: paymeId, state: 2 };
   }
 
   private async cancelTxn(params: any) {
@@ -191,12 +195,22 @@ export class PaymentsService {
     if (!payment) throw this.paymeError(PAYME_ERR.TXN_NOT_FOUND);
     if (payment.status === 'released') throw this.paymeError(PAYME_ERR.CANT_CANCEL_DONE);
 
+    // Idempotent: return the original cancellation time on retries
+    if (payment.status === 'refunded') {
+      return {
+        cancel_time: (payment.cancelledAt ?? payment.createdAt).getTime(),
+        transaction: paymeId,
+        state: -1,
+      };
+    }
+
+    const cancelledAt = new Date();
     await this.prisma.payment.update({
       where: { id: payment.id },
-      data: { status: 'refunded' },
+      data: { status: 'refunded', cancelledAt },
     });
 
-    return { cancel_time: Date.now(), transaction: paymeId, state: -1 };
+    return { cancel_time: cancelledAt.getTime(), transaction: paymeId, state: -1 };
   }
 
   private async checkTxn(params: any) {
@@ -213,8 +227,8 @@ export class PaymentsService {
 
     return {
       create_time: payment.createdAt.getTime(),
-      perform_time: payment.status === 'released' ? payment.createdAt.getTime() : 0,
-      cancel_time: ['refunded', 'disputed'].includes(payment.status) ? payment.createdAt.getTime() : 0,
+      perform_time: payment.performedAt?.getTime() ?? 0,
+      cancel_time: payment.cancelledAt?.getTime() ?? 0,
       transaction: paymeId,
       state: stateMap[payment.status] ?? 1,
       reason: null,
@@ -245,8 +259,8 @@ export class PaymentsService {
         amount: Number(p.amountUzs) * 100, // tiyn
         account: { payment_id: p.id },
         create_time: p.createdAt.getTime(),
-        perform_time: p.status === 'released' ? p.createdAt.getTime() : 0,
-        cancel_time: 0,
+        perform_time: p.performedAt?.getTime() ?? 0,
+        cancel_time: p.cancelledAt?.getTime() ?? 0,
         transaction: p.externalTransactionId,
         state: p.status === 'released' ? 2 : 1,
         reason: null,

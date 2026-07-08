@@ -250,7 +250,13 @@ export class AuthService {
   }
 
   private hashCode(phone: string, code: string): string {
-    const secret = process.env.JWT_SECRET ?? 'otp-secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      // Fail loudly instead of silently falling back to a hardcoded secret
+      throw new Error(
+        'Configuration error: JWT_SECRET environment variable is not set',
+      );
+    }
     return createHmac('sha256', secret).update(`${phone}:${code}`).digest('hex');
   }
 }
