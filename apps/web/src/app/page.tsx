@@ -467,28 +467,10 @@ function StatsBar() {
   const s = t.stats;
   const rev = useReveal();
 
-  const [stats, setStats] = useState({
-    executorCount: 2000,
-    taskCount: 15000,
-    avgRating: 4.8,
-    cityCount: 12,
-  });
-
-  useEffect(() => {
-    api.stats.get()
-      .then((data) => setStats(prev => ({
-        executorCount: Math.max(prev.executorCount, data.executorCount),
-        taskCount:     Math.max(prev.taskCount,     data.taskCount),
-        avgRating:     Math.max(prev.avgRating,     data.avgRating),
-        cityCount:     Math.max(prev.cityCount,     data.cityCount),
-      })))
-      .catch(() => {});
-  }, []);
-
-  const masters = useCountUp(stats.executorCount);
-  const tasks   = useCountUp(stats.taskCount);
-  const rating  = useCountUp(stats.avgRating, 1);
-  const cities  = useCountUp(stats.cityCount);
+  const masters = useCountUp(2000);
+  const tasks   = useCountUp(15000);
+  const rating  = useCountUp(4.8, 1);
+  const cities  = useCountUp(12);
 
   const items = [
     { label: s.masters.label, spanRef: masters.ref, display: `${masters.val.toLocaleString()}+` },
