@@ -73,6 +73,10 @@ function AuthForm() {
     if (!TG_BOT_NAME) return;
     const container = document.getElementById('tg-widget');
     if (!container || container.childNodes.length > 0) return;
+    // Stretch the iframe element to fill our button so clicks register anywhere on it
+    const style = document.createElement('style');
+    style.textContent = '#tg-widget iframe { width: 100% !important; height: 100% !important; }';
+    document.head.appendChild(style);
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', TG_BOT_NAME);
@@ -151,10 +155,19 @@ function AuthForm() {
             </button>
           )}
 
-          {/* Telegram — renders the actual widget button; can't proxy-click a cross-origin iframe */}
+          {/* Telegram — custom styled button with invisible widget iframe overlay */}
           {TG_BOT_NAME ? (
-            <div className="w-full flex justify-center">
-              <div id="tg-widget" />
+            <div className="relative w-full" style={{ height: '52px' }}>
+              {/* Visual button — pointer-events disabled so the iframe on top receives clicks */}
+              <div
+                className="absolute inset-0 rounded-2xl text-white flex items-center justify-center gap-3 text-sm font-bold pointer-events-none select-none"
+                style={{ background: '#229ED9' }}
+              >
+                <TelegramIcon />
+                {isRu ? 'Войти через Telegram' : 'Telegram orqali kirish'}
+              </div>
+              {/* Invisible iframe overlay — stretched to fill button via injected CSS */}
+              <div id="tg-widget" className="absolute inset-0 overflow-hidden rounded-2xl" style={{ opacity: 0.001 }} />
             </div>
           ) : (
             <button disabled className={BTN + ' border border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
