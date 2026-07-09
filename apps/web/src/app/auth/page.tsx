@@ -83,12 +83,6 @@ function AuthForm() {
     container.appendChild(script);
   }, [redirect, router]);
 
-  function handleTelegramClick() {
-    const btn = document.querySelector('#tg-widget a') as HTMLElement | null;
-    if (btn) btn.click();
-    else setError(isRu ? 'Telegram ещё загружается, попробуйте снова' : "Telegram yuklanmoqda, qayta urinib ko'ring");
-  }
-
   async function onGoogleSuccess(accessToken: string) {
     setLoading(true); setError('');
     try {
@@ -125,9 +119,6 @@ function AuthForm() {
 
   return (
     <div className="relative min-h-screen bg-[#F8F7FF] flex flex-col overflow-x-hidden">
-      {/* Telegram widget — off-screen but rendered so the <a> tag exists */}
-      <div id="tg-widget" className="absolute -left-[9999px] -top-[9999px] pointer-events-none" />
-
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div />
@@ -160,18 +151,11 @@ function AuthForm() {
             </button>
           )}
 
-          {/* Telegram */}
+          {/* Telegram — renders the actual widget button; can't proxy-click a cross-origin iframe */}
           {TG_BOT_NAME ? (
-            <button
-              type="button"
-              onClick={handleTelegramClick}
-              disabled={loading}
-              className={BTN + ' text-white flex items-center justify-center gap-3'}
-              style={{ background: '#229ED9' }}
-            >
-              <TelegramIcon />
-              {isRu ? 'Войти через Telegram' : 'Telegram orqali kirish'}
-            </button>
+            <div className="w-full flex justify-center">
+              <div id="tg-widget" />
+            </div>
           ) : (
             <button disabled className={BTN + ' border border-zinc-200 text-zinc-400 bg-white flex items-center justify-center gap-3'}>
               <TelegramIcon />
