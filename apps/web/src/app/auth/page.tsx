@@ -125,8 +125,8 @@ function AuthForm() {
 
   return (
     <div className="relative min-h-screen bg-[#F8F7FF] flex flex-col overflow-x-hidden">
-      {/* Hidden Telegram widget */}
-      <div id="tg-widget" className="hidden" />
+      {/* Telegram widget — off-screen but rendered so the <a> tag exists */}
+      <div id="tg-widget" className="absolute -left-[9999px] -top-[9999px] pointer-events-none" />
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
