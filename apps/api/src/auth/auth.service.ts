@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomInt, timingSafeEqual } from 'crypto';
 import { PublicRole } from './dto/verify-otp.dto';
 import { TelegramAuthDto } from './dto/social-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -38,7 +38,9 @@ export class AuthService {
       );
     }
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    // crypto.randomInt is a CSPRNG — Math.random() is predictable and must
+    // never be used for auth codes.
+    const code = String(randomInt(100000, 1000000));
     // Store HMAC of the code, not plaintext
     const hashed = this.hashCode(phone, code);
     const otpKey = `otp:${phone}`;
@@ -160,13 +162,18 @@ export class AuthService {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) throw new HttpException('Telegram auth not configured', HttpStatus.SERVICE_UNAVAILABLE);
 
-    // Verify Telegram hash: sort fields, join as key=value\n, HMAC-SHA256 with SHA256(botToken)
+    // This endpoint receives Telegram LOGIN WIDGET payloads (flat fields:
+    // id, first_name, auth_date, hash — see TelegramAuthDto). Per the Login
+    // Widget spec, the secret key is SHA256(bot_token).
+    // NOTE: do NOT use HMAC-SHA256("WebAppData", bot_token) here — that key
+    // derivation is only for Mini App initData validation, a different flow.
     const { hash, ...fields } = dto;
     const checkStr = Object.entries(fields)
+      .filter(([, v]) => v !== undefined && v !== null)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => `${k}=${v}`)
       .join('\n');
-    const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const secretKey = createHash('sha256').update(botToken).digest();
     const expected  = createHmac('sha256', secretKey).update(checkStr).digest('hex');
     if (expected !== hash) throw new UnauthorizedException('Invalid Telegram auth data');
 
@@ -203,6 +210,7 @@ export class AuthService {
     let gEmail: string | null = null;
     let gName:  string | null = null;
     let gPic:   string | null = null;
+    let gEmailVerified = false;
 
     try {
       const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -215,8 +223,17 @@ export class AuthService {
       gEmail   = p.email   ?? null;
       gName    = p.name    ?? null;
       gPic     = p.picture ?? null;
+      // v2 userinfo returns `verified_email`; OIDC userinfo returns `email_verified`
+      gEmailVerified = p.verified_email === true || p.email_verified === true;
     } catch {
       throw new UnauthorizedException('Invalid Google token');
+    }
+
+    // Never trust (or link accounts by) an unverified email — an attacker can
+    // register a Google account with someone else's email address and would
+    // otherwise take over the existing account with that email.
+    if (gEmail && !gEmailVerified) {
+      throw new UnauthorizedException('Google account email is not verified');
     }
 
     let isNewUser = false;

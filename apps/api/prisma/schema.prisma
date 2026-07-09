@@ -156,7 +156,9 @@ model Subscription {
   bidsUsed    Int              @default(0) @map("bids_used")
   priceUzs    BigInt           @map("price_uzs")
   startsAt    DateTime         @map("starts_at")
-  expiresAt   DateTime         @map("expires_at")
+  // Null while payment is pending; set when the payment is confirmed so the
+  // paid period starts at activation, not at checkout initiation.
+  expiresAt   DateTime?        @map("expires_at")
   isActive    Boolean          @default(true) @map("is_active")
 
   executor ExecutorProfile @relation(fields: [executorId], references: [id], onDelete: Cascade)

@@ -82,36 +82,58 @@ export class SubscriptionsService {
 
     if (priceUzs === 0) throw new BadRequestException("Bu kategoriya uchun obuna bepul emas");
 
-    const startsAt = new Date();
-    const expiresAt = new Date(startsAt.getTime() + plan.days * 24 * 60 * 60 * 1000);
-
-    // Create the subscription in pending state (isActive: false until payment completes)
-    const subscription = await this.prisma.subscription.create({
-      data: {
+    // Idempotent: reuse an existing pending (never-activated) subscription for
+    // the same executor+category+plan at the same price instead of piling up
+    // duplicate rows every time the user re-opens the checkout page.
+    let subscription = await this.prisma.subscription.findFirst({
+      where: {
         executorId: profile.id,
         categoryId,
         planType: planId as any,
-        bidsTotal: plan.bids ?? 999999,
-        bidsUsed: 0,
-        priceUzs: BigInt(priceUzs),
-        startsAt,
-        expiresAt,
         isActive: false,
+        expiresAt: null, // never activated
+        priceUzs: BigInt(priceUzs),
       },
     });
 
-    // Create a payment record linked to this subscription
-    const payment = await this.prisma.payment.create({
-      data: {
-        subscriptionId: subscription.id,
-        payerId: userId,
-        payeeId: userId, // platform fee — no separate payee for subscriptions
-        amountUzs: BigInt(priceUzs),
-        commissionUzs: BigInt(priceUzs), // entire amount is platform revenue
-        paymentMethod: 'payme',
-        status: 'pending',
-      },
+    if (!subscription) {
+      // Create the subscription in pending state.
+      // expiresAt stays NULL until the payment webhook confirms — the paid
+      // period must start at activation, not at checkout initiation.
+      subscription = await this.prisma.subscription.create({
+        data: {
+          executorId: profile.id,
+          categoryId,
+          planType: planId as any,
+          bidsTotal: plan.bids ?? 999999,
+          bidsUsed: 0,
+          priceUzs: BigInt(priceUzs),
+          startsAt: new Date(), // provisional; overwritten at activation
+          expiresAt: null,
+          isActive: false,
+        },
+      });
+    }
+
+    // Reuse the pending payment for this subscription if one exists
+    let payment = await this.prisma.payment.findFirst({
+      where: { subscriptionId: subscription.id, status: 'pending' },
+      orderBy: { createdAt: 'desc' },
     });
+
+    if (!payment) {
+      payment = await this.prisma.payment.create({
+        data: {
+          subscriptionId: subscription.id,
+          payerId: userId,
+          payeeId: userId, // platform fee — no separate payee for subscriptions
+          amountUzs: BigInt(priceUzs),
+          commissionUzs: BigInt(priceUzs), // entire amount is platform revenue
+          paymentMethod: 'payme',
+          status: 'pending',
+        },
+      });
+    }
 
     const checkoutUrl = this.buildPaymeUrl(payment.id, priceUzs);
     return { paymentId: payment.id, subscriptionId: subscription.id, checkoutUrl, priceUzs };
@@ -119,8 +141,11 @@ export class SubscriptionsService {
 
   private serialize(s: any) {
     const now = new Date();
-    const daysLeft = Math.max(0, Math.ceil((new Date(s.expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    const isExpired = new Date(s.expiresAt) < now;
+    // expiresAt is null while the subscription is awaiting payment
+    const daysLeft = s.expiresAt
+      ? Math.max(0, Math.ceil((new Date(s.expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      : null;
+    const isExpired = s.expiresAt ? new Date(s.expiresAt) < now : false;
     const isUnlimited = s.planType.startsWith('unlimited');
 
     return {

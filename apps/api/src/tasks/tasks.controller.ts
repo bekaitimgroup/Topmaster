@@ -16,7 +16,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { imageUploadOptions } from '../common/multer.config';
+import { fileUrl, imageUploadOptions } from '../common/multer.config';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
@@ -30,7 +30,7 @@ export class TasksController {
     @Body() dto: CreateTaskDto,
     @UploadedFiles() photos: Express.Multer.File[] = [],
   ) {
-    const photoUrls = (photos ?? []).map((f) => `/api/files/${f.filename}`);
+    const photoUrls = (photos ?? []).map(fileUrl);
     return this.tasks.create(req.user.id, dto, photoUrls);
   }
 

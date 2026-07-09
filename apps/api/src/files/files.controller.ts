@@ -7,6 +7,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 // Only allow safe filenames: hex chars + allowed extensions, no path traversal
 const SAFE_FILENAME = /^[a-f0-9]+\.(jpg|jpeg|png|webp|gif)$/i;
 
+// LOCAL-DEV FALLBACK ONLY. When S3 storage is configured (see
+// common/multer.config.ts), uploads go to object storage and the stored URLs
+// point directly at S3/CDN — they never route through this controller.
+
 @Controller('files')
 @UseGuards(JwtAuthGuard)
 export class FilesController {

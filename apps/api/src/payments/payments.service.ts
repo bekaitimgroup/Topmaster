@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { PLANS } from '../executor/executor.service';
 
 // Payme JSON-RPC error codes
 const PAYME_ERR = {
@@ -166,12 +167,29 @@ export class PaymentsService {
     const performedAt = new Date();
 
     if (payment.subscriptionId) {
-      // Subscription payment
+      // Subscription payment. The paid period starts NOW (payment confirmed),
+      // not at checkout initiation — expiresAt is intentionally left null
+      // until this point (see SubscriptionsService.initiatePurchase).
+      const sub = await this.prisma.subscription.findUnique({
+        where: { id: payment.subscriptionId },
+      });
+      if (!sub) throw this.paymeError(PAYME_ERR.ORDER_NOT_FOUND);
+
+      const plan = PLANS.find((p) => p.id === sub.planType);
+      if (!plan) {
+        this.logger.warn(`Unknown plan type ${sub.planType} for subscription ${sub.id}; defaulting to 30 days`);
+      }
+      const days = plan?.days ?? 30;
+      const expiresAt = new Date(performedAt.getTime() + days * 24 * 60 * 60 * 1000);
+
       await this.prisma.$transaction([
         this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'released', performedAt } }),
-        this.prisma.subscription.update({ where: { id: payment.subscriptionId }, data: { isActive: true } }),
+        this.prisma.subscription.update({
+          where: { id: payment.subscriptionId },
+          data: { isActive: true, startsAt: performedAt, expiresAt },
+        }),
       ]);
-      this.logger.log(`Subscription payment ${payment.id} released — subscription ${payment.subscriptionId} activated`);
+      this.logger.log(`Subscription payment ${payment.id} released — subscription ${payment.subscriptionId} activated until ${expiresAt.toISOString()}`);
     } else if (payment.taskId) {
       // Task escrow payment
       await this.prisma.$transaction([

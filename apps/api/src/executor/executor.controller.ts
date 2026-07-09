@@ -14,7 +14,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ExecutorService } from './executor.service';
 import { CreateExecutorDto } from './dto/create-executor.dto';
-import { imageUploadOptions } from '../common/multer.config';
+import { fileUrl, imageUploadOptions } from '../common/multer.config';
 
 @Controller('executor')
 @UseGuards(JwtAuthGuard)
@@ -28,7 +28,7 @@ export class ExecutorController {
     @Body() dto: CreateExecutorDto,
     @UploadedFiles() portfolio: Express.Multer.File[] = [],
   ) {
-    const portfolioUrls = (portfolio ?? []).map((f) => `/api/files/${f.filename}`);
+    const portfolioUrls = (portfolio ?? []).map(fileUrl);
     return this.executor.register(req.user.id, dto, portfolioUrls);
   }
 
