@@ -42,7 +42,7 @@ const uz = {
     steps: [
       { n: '01', title: 'Vazifani yozing',    desc: "Ikki-uch jumla va bitta foto — shu kifoya. Ikki daqiqa vaqt oladi.", icon: '📝' },
       { n: '02', title: 'Takliflarni oling',  desc: "Tekshirilgan ustalar o'zlari narx va muddat yuboradi. Hech kimga qo'ng'iroq qilish shart emas.", icon: '📨' },
-      { n: '03', title: 'Tanlang va xotirjam to'lang', desc: "Narx va sharhlarni solishtiring. Ish bitmaguncha pulingiz himoyada turadi.", icon: '✅' },
+      { n: '03', title: "Tanlang va xotirjam to'lang", desc: "Narx va sharhlarni solishtiring. Ish bitmaguncha pulingiz himoyada turadi.", icon: '✅' },
     ],
   },
 
