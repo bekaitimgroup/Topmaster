@@ -30,10 +30,10 @@ const uz = {
   },
 
   stats: {
-    masters: { value: '2 000+', label: 'Faol usta' },
-    tasks:   { value: '15 000+', label: 'Bajarilgan buyurtma' },
-    rating:  { value: '4.8★', label: "O'rtacha baho" },
-    cities:  { value: '12', label: 'Shahar' },
+    masters: { value: '312+',   label: 'Faol usta' },
+    tasks:   { value: '1 847+', label: 'Bajarilgan buyurtma' },
+    rating:  { value: '4.9★',   label: "O'rtacha baho" },
+    cities:  { value: '6',      label: 'Shahar' },
   },
 
   how: {

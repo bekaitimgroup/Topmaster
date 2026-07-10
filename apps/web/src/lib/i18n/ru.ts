@@ -32,10 +32,10 @@ const ru: Lang = {
   },
 
   stats: {
-    masters: { value: '2 000+', label: 'Активных мастеров' },
-    tasks:   { value: '15 000+', label: 'Выполненных заказов' },
-    rating:  { value: '4.8★', label: 'Средняя оценка' },
-    cities:  { value: '12', label: 'Городов' },
+    masters: { value: '312+',   label: 'Активных мастеров' },
+    tasks:   { value: '1 847+', label: 'Выполненных заказов' },
+    rating:  { value: '4.9★',   label: 'Средняя оценка' },
+    cities:  { value: '6',      label: 'Городов' },
   },
 
   how: {

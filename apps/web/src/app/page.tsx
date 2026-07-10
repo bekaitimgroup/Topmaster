@@ -568,10 +568,10 @@ function StatsBar() {
   const { t } = useLanguage();
   const s = t.stats;
 
-  const masters = useCountUp(2000);
-  const tasks   = useCountUp(15000);
-  const rating  = useCountUp(4.8, 1);
-  const cities  = useCountUp(12);
+  const masters = useCountUp(312);
+  const tasks   = useCountUp(1847);
+  const rating  = useCountUp(4.9, 1);
+  const cities  = useCountUp(6);
 
   const items = [
     { label: s.masters.label, spanRef: masters.ref, display: `${masters.val.toLocaleString()}+` },
