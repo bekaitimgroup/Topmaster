@@ -16,30 +16,38 @@ import { api } from '@/lib/api';
 function useCountUp(end: number, decimals = 0) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
+  const done = useRef(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (
-      typeof IntersectionObserver === 'undefined' ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      setVal(end);
-      return;
+    if (!el || done.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setVal(end); return;
     }
     let rafId = 0;
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      obs.disconnect();
+    const run = () => {
+      if (done.current) return;
+      done.current = true;
       const dur = 1500;
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0) / dur, 1);
-        const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        const eased = 1 - Math.pow(1 - p, 3);
         setVal(parseFloat((eased * end).toFixed(decimals)));
         if (p < 1) { rafId = requestAnimationFrame(tick); }
       };
       rafId = requestAnimationFrame(tick);
-    }, { threshold: 0.4 });
+    };
+    // Fire immediately if already in viewport (handles refresh at scroll position)
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      run();
+      return () => cancelAnimationFrame(rafId);
+    }
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      run();
+    }, { threshold: 0.1 });
     obs.observe(el);
     return () => { obs.disconnect(); cancelAnimationFrame(rafId); };
   }, [end, decimals]);
