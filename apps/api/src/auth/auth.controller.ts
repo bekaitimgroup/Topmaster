@@ -58,6 +58,29 @@ export class AuthController {
     return { isNewUser: result.isNewUser };
   }
 
+  // Mobile: Telegram auth returns token in body
+  @Post('telegram/mobile')
+  async telegramAuthMobile(@Body() dto: TelegramAuthDto) {
+    const result = await this.auth.loginWithTelegram(dto);
+    return { accessToken: result.accessToken, isNewUser: result.isNewUser };
+  }
+
+  // Mobile: Telegram OAuth redirect — validates data, redirects to app deep link
+  @Get('telegram/mobile-redirect')
+  async telegramMobileRedirect(
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const dto = req.query as TelegramAuthDto;
+      const result = await this.auth.loginWithTelegram(dto);
+      const params = new URLSearchParams({ accessToken: result.accessToken, isNewUser: String(result.isNewUser) });
+      return res.redirect(`topmaster://auth/telegram?${params.toString()}`);
+    } catch {
+      return res.redirect('topmaster://auth/telegram?error=auth_failed');
+    }
+  }
+
   @Post('google')
   async googleAuth(
     @Body() dto: GoogleAuthDto,
@@ -66,6 +89,13 @@ export class AuthController {
     const result = await this.auth.loginWithGoogle(dto.accessToken);
     res.cookie('token', result.accessToken, COOKIE_OPTIONS);
     return { isNewUser: result.isNewUser };
+  }
+
+  // Mobile: Google auth returns token in body
+  @Post('google/mobile')
+  async googleAuthMobile(@Body() dto: GoogleAuthDto) {
+    const result = await this.auth.loginWithGoogle(dto.accessToken);
+    return { accessToken: result.accessToken, isNewUser: result.isNewUser };
   }
 
   @Post('logout')
