@@ -143,8 +143,12 @@ footer :focus-visible {
 
 /* ═══ Micro-interactions ═════════════════════════════════════════════════ */
 
-/* Attach to every button/link that performs an action. */
+/* Attach to every button/link that performs an action.
+   position/overflow contain the click ripple (see .ripple-ink);
+   box-shadow glows are unaffected — overflow doesn't clip shadows. */
 .btn-press {
+  position: relative;
+  overflow: hidden;
   transition: transform 0.15s var(--ease-spring), box-shadow 0.2s ease, opacity 0.2s ease;
 }
 .btn-press:hover  { transform: translateY(-1px); }
@@ -192,6 +196,81 @@ footer :focus-visible {
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ═══ Reveal component (scroll-triggered, via useInView + <Reveal>) ══════ */
+/* Delay/duration come in as CSS vars set inline by the component.         */
+
+.rv {
+  opacity: 0;
+  transition:
+    opacity   var(--rv-dur, 600ms) var(--ease-out-expo) var(--rv-delay, 0ms),
+    transform var(--rv-dur, 600ms) var(--ease-out-expo) var(--rv-delay, 0ms);
+}
+.rv-fade-up     { transform: translateY(24px); }
+.rv-fade-in     { transform: none; }
+.rv-scale-in    { transform: scale(0.94); }
+.rv-slide-left  { transform: translateX(40px); }
+.rv-slide-right { transform: translateX(-40px); }
+.rv.rv-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ═══ Hero headline word reveal ══════════════════════════════════════════ */
+
+@keyframes wordUp {
+  from { opacity: 0; transform: translateY(0.5em); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.word-reveal {
+  display: inline-block;
+  animation: wordUp 0.5s var(--ease-out-expo) both;
+  /* animation-delay set inline per word (40ms stagger) */
+}
+
+/* ═══ Click ripple (delegated via <RippleLayer /> on .btn-press) ═════════ */
+
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to   { transform: scale(1); opacity: 0; }
+}
+.ripple-ink {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  pointer-events: none;
+  animation: ripple 0.55s var(--ease-out-expo) both;
+}
+
+/* ═══ Spotlight cards (cursor-following glow, desktop pointers only) ═════ */
+/* --mx/--my set by onMouseMove (spotlightMove in page.tsx). Overlay is    */
+/* pointer-events:none and 10% alpha — never obscures text (contrast-safe).*/
+
+@media (hover: hover) and (pointer: fine) {
+  .spotlight { position: relative; }
+  .spotlight::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(124, 58, 237, 0.10),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .spotlight:hover::after { opacity: 1; }
+}
+
+/* ═══ Anchor targets clear the fixed nav (~64px) when smooth-scrolled ════ */
+
+section[id], #stats {
+  scroll-margin-top: 76px;
 }
 
 /* ═══ Loading: shimmer skeletons (never bare spinners for content) ═══════ */
@@ -248,9 +327,12 @@ footer :focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up, .animate-fade-in, .animate-scale-in,
   .success-pop, .success-ring, .confetti-piece,
+  .word-reveal, .ripple-ink,
   .skeleton::after {
     animation: none !important;
   }
   .reveal { opacity: 1; transform: none; transition: none; }
+  .rv     { opacity: 1; transform: none; transition: none; }
   .btn-press, .card-lift { transition: none; }
+  .spotlight::after { display: none; }
 }

@@ -1,48 +1,59 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Logo from '@/components/Logo';
+import Reveal from '@/components/Reveal';
+import RippleLayer from '@/components/RippleLayer';
 import { api } from '@/lib/api';
 
-/* ─── Hooks ──────────────────────────────────────────────────────────────── */
+/* ─── Hooks & interaction helpers ────────────────────────────────────────── */
 
+/** Count-up that starts when the number scrolls into view (not on mount).
+    1.5s, easeOutCubic. Reduced-motion users get the final value instantly. */
 function useCountUp(end: number, decimals = 0) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    let rafId: number;
-    const timer = setTimeout(() => {
-      const dur = 1600;
+    const el = ref.current;
+    if (!el) return;
+    if (
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setVal(end);
+      return;
+    }
+    let rafId = 0;
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      const dur = 1500;
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0) / dur, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
+        const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
         setVal(parseFloat((eased * end).toFixed(decimals)));
         if (p < 1) { rafId = requestAnimationFrame(tick); }
       };
       rafId = requestAnimationFrame(tick);
-    }, 400);
-    return () => { clearTimeout(timer); cancelAnimationFrame(rafId); };
+    }, { threshold: 0.4 });
+    obs.observe(el);
+    return () => { obs.disconnect(); cancelAnimationFrame(rafId); };
   }, [end, decimals]);
   return { val, ref };
 }
 
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.classList.add('reveal');
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); }
-    }, { threshold: 0.1 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return ref;
+/** Spotlight-card mousemove handler: feeds cursor position to the
+    .spotlight::after radial glow via CSS vars (desktop pointers only —
+    the CSS is gated behind (hover:hover) and (pointer:fine)). */
+function spotlightMove(e: React.MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+  el.style.setProperty('--my', `${e.clientY - r.top}px`);
 }
 
 /* ─── Live ticker data ───────────────────────────────────────────────────── */
@@ -247,9 +258,25 @@ function Navbar() {
   const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     api.auth.me().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
+  }, []);
+
+  // Transparent over the dark hero → solid blur past 80px (RAF-throttled)
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        setScrolled(window.scrollY > 80);
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
   }, []);
 
   async function logout() {
@@ -275,7 +302,13 @@ function Navbar() {
   return (
     <>
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-4 py-3.5 md:px-12 md:py-4">
-        <div className="absolute inset-0 bg-[#0B0B18]/80 backdrop-blur-md border-b border-white/5" />
+        {/* Nav backdrop: opacity-animated so backdrop-blur fades in smoothly.
+            Forced visible while the mobile menu is open (legibility). */}
+        <div
+          className={`absolute inset-0 bg-[#0B0B18]/80 backdrop-blur-md border-b border-white/5 transition-opacity duration-200 ${
+            scrolled || mobileOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
         <Logo size="sm" variant="dark" />
 
         {/* Desktop links — absolutely centered on the full nav width */}
@@ -399,25 +432,68 @@ const TRUST_ICONS = [
 
 function Hero() {
   const { t, lang } = useLanguage();
+  const blobA = useRef<HTMLDivElement>(null);
+  const blobB = useRef<HTMLDivElement>(null);
+
+  // Subtle parallax on the ambient glows — desktop pointers only, RAF-throttled.
+  // Note: Tailwind v4 -translate-* utilities use the `translate` property,
+  // so this inline `transform` composes with them instead of clobbering.
+  useEffect(() => {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        if (y > window.innerHeight * 1.5) return; // hero long gone — skip work
+        const shift = `translateY(${(y * 0.3).toFixed(1)}px)`;
+        if (blobA.current) blobA.current.style.transform = shift;
+        if (blobB.current) blobB.current.style.transform = shift;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
+  }, []);
+
+  // Word-by-word headline reveal: 40ms stagger, continuous index across
+  // all three translation segments so the wave reads left-to-right.
+  const titleWords = t.hero.title.split(' ');
+  const endWords = t.hero.titleEnd.split(' ');
+  const hiIndex = titleWords.length; // delay slot for the gradient highlight
+
   return (
     <section className="hero-bg relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20 pb-16 overflow-hidden">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-[120px] pointer-events-none"
+      <div ref={blobA} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-[120px] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #7C3AED, transparent)' }} />
-      <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full opacity-8 blur-[100px] pointer-events-none"
+      <div ref={blobB} className="absolute bottom-0 right-0 w-72 h-72 rounded-full opacity-8 blur-[100px] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }} />
 
       {/* Live ticker — replaces static badge */}
       <LiveTicker />
 
-      {/* Headline */}
+      {/* Headline — word-by-word reveal, 40ms stagger. The gradient phrase
+          animates as one unit so the violet→gold sweep stays continuous
+          (per-word clipping would restart the gradient on every word). */}
       <h1
-        className="relative text-[2.6rem] sm:text-6xl md:text-[80px] font-black text-white leading-[1.0] max-w-4xl animate-fade-up"
+        className="relative text-[2.6rem] sm:text-6xl md:text-[80px] font-black text-white leading-[1.0] max-w-4xl"
         style={{ letterSpacing: '-0.04em' }}
       >
-        {t.hero.title}{' '}
-        <span className="gradient-text">{t.hero.titleHighlight}</span>
+        {titleWords.map((w, i) => (
+          <Fragment key={`tw-${i}-${w}`}>
+            <span className="word-reveal" style={{ animationDelay: `${i * 40}ms` }}>{w}</span>{' '}
+          </Fragment>
+        ))}
+        <span className="word-reveal gradient-text" style={{ animationDelay: `${hiIndex * 40}ms` }}>
+          {t.hero.titleHighlight}
+        </span>
         <br className="hidden sm:block" />{' '}
-        {t.hero.titleEnd}
+        {endWords.map((w, i) => (
+          <Fragment key={`ew-${i}-${w}`}>
+            <span className="word-reveal" style={{ animationDelay: `${(hiIndex + 1 + i) * 40}ms` }}>{w}</span>{' '}
+          </Fragment>
+        ))}
       </h1>
 
       <p className="relative mt-5 text-base md:text-xl text-white/45 max-w-md leading-relaxed">
@@ -491,7 +567,6 @@ function Hero() {
 function StatsBar() {
   const { t } = useLanguage();
   const s = t.stats;
-  const rev = useReveal();
 
   const masters = useCountUp(2000);
   const tasks   = useCountUp(15000);
@@ -506,8 +581,8 @@ function StatsBar() {
   ];
 
   return (
-    <div id="stats" ref={rev} className="bg-[#0B0B18] border-y border-white/5">
-      <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4">
+    <div id="stats" className="bg-[#0B0B18] border-y border-white/5">
+      <Reveal variant="fade-in" className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4">
         {items.map((item, i) => (
           <div key={item.label}
             className={`flex flex-col items-center py-5 ${i % 2 === 0 && i < 3 ? 'border-r border-white/5' : ''} ${i < 2 ? 'md:border-r md:border-white/5' : ''}`}>
@@ -517,7 +592,7 @@ function StatsBar() {
             <span className="text-xs sm:text-sm text-white/35 mt-1 text-center px-2">{item.label}</span>
           </div>
         ))}
-      </div>
+      </Reveal>
     </div>
   );
 }
@@ -539,19 +614,18 @@ const STEP_ICONS = [
 function HowItWorks() {
   const { t } = useLanguage();
   const h = t.how;
-  const rev = useReveal();
 
   return (
     <section id="how-it-works" className="py-20 md:py-24 px-4 bg-white">
-      <div className="max-w-5xl mx-auto" ref={rev}>
-        <div className="text-center mb-12 md:mb-16">
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="text-center mb-12 md:mb-16">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">{h.sectionLabel}</span>
           <h2 className="text-3xl md:text-[52px] font-extrabold text-[#0D0D1A] leading-tight">{h.title}</h2>
-        </div>
+        </Reveal>
 
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           {h.steps.map((s, i) => (
-            <div key={s.n} className="relative group">
+            <Reveal key={s.n} delay={i * 150} className="relative group">
               {i < h.steps.length - 1 && (
                 <div className="hidden md:flex absolute top-10 left-[calc(100%+2px)] w-5 items-center justify-center z-10">
                   <svg width="16" height="10" viewBox="0 0 20 12" fill="none">
@@ -569,7 +643,7 @@ function HowItWorks() {
                 <h3 className="text-base md:text-lg font-bold text-[#0D0D1A] mb-2">{s.title}</h3>
                 <p className="text-[#71717A] leading-relaxed text-sm">{s.desc}</p>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -613,7 +687,8 @@ function Categories() {
           {/* Featured card — spans 2 cols */}
           <Link
             href="/post-task"
-            className="col-span-2 group bg-white rounded-2xl p-5 flex items-center gap-4 border border-amber-100 hover:border-amber-300 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+            onMouseMove={spotlightMove}
+            className="spotlight col-span-2 group bg-white rounded-2xl p-5 flex items-center gap-4 border border-amber-100 hover:border-amber-300 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
             style={{
               opacity: revealed ? 1 : 0,
               transform: revealed ? 'none' : 'translateY(16px)',
@@ -636,12 +711,13 @@ function Categories() {
           {/* Rest of categories with stagger */}
           {rest.map((cat, i) => {
             const cfg = CAT_CONFIG[(i + 1) % CAT_CONFIG.length];
-            const delay = (i + 1) * 55;
+            const delay = (i + 1) * 50;
             return (
               <Link
                 key={cat.name}
                 href="/post-task"
-                className={`group bg-white rounded-2xl p-4 md:p-5 flex flex-col gap-3 border border-zinc-100 ${cfg.hoverBorder} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98]`}
+                onMouseMove={spotlightMove}
+                className={`spotlight group bg-white rounded-2xl p-4 md:p-5 flex flex-col gap-3 border border-zinc-100 ${cfg.hoverBorder} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98]`}
                 style={{
                   opacity: revealed ? 1 : 0,
                   transform: revealed ? 'none' : 'translateY(16px)',
@@ -689,35 +765,36 @@ const PERK_ICONS = [
 function ForMasters() {
   const { t } = useLanguage();
   const m = t.forMasters;
-  const rev = useReveal();
 
   return (
     <section id="for-masters" className="py-20 md:py-24 px-4 hero-bg relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 blur-[120px] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }} />
 
-      <div className="max-w-5xl mx-auto relative" ref={rev}>
-        <div className="text-center mb-10 md:mb-14">
+      <div className="max-w-5xl mx-auto relative">
+        <Reveal className="text-center mb-10 md:mb-14">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#F59E0B] mb-3">{m.sectionLabel}</span>
           <h2 className="text-3xl md:text-[52px] font-extrabold text-white leading-tight">
             {m.title}{' '}
             <span className="gradient-text">{m.titleHighlight}</span>
           </h2>
           <p className="mt-3 text-sm md:text-base text-white/45 max-w-sm mx-auto">{m.subtitle}</p>
-        </div>
+        </Reveal>
 
         <div className="grid sm:grid-cols-2 gap-3 md:gap-4 mb-10 md:mb-12">
           {m.perks.map((p, i) => (
-            <div key={p.title} className="glass rounded-2xl p-5 md:p-6 flex gap-4">
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-[#F59E0B]"
-                style={{ background: 'rgba(245,158,11,0.12)' }}>
-                {PERK_ICONS[i]}
+            <Reveal key={p.title} delay={i * 100} className="h-full">
+              <div className="glass rounded-2xl p-5 md:p-6 flex gap-4 h-full">
+                <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-[#F59E0B]"
+                  style={{ background: 'rgba(245,158,11,0.12)' }}>
+                  {PERK_ICONS[i]}
+                </div>
+                <div>
+                  <p className="font-bold text-white text-sm">{p.title}</p>
+                  <p className="text-xs md:text-sm text-white/45 mt-1 leading-relaxed">{p.desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-white text-sm">{p.title}</p>
-                <p className="text-xs md:text-sm text-white/45 mt-1 leading-relaxed">{p.desc}</p>
-              </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 
@@ -746,20 +823,21 @@ const AVATAR_GRADIENTS = [
 function Testimonials() {
   const { t } = useLanguage();
   const tr = t.testimonials;
-  const rev = useReveal();
 
   return (
     <section className="py-20 md:py-24 px-4 bg-white">
-      <div className="max-w-5xl mx-auto" ref={rev}>
-        <div className="text-center mb-10 md:mb-14">
+      <div className="max-w-5xl mx-auto">
+        <Reveal className="text-center mb-10 md:mb-14">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">{tr.sectionLabel}</span>
           <h2 className="text-3xl md:text-[52px] font-extrabold text-[#0D0D1A]">{tr.title}</h2>
-        </div>
+        </Reveal>
 
         <div className="grid md:grid-cols-3 gap-4 md:gap-5">
           {tr.items.map((item, i) => (
-            <div key={item.name}
-              className="bg-[#F8F7FF] rounded-3xl p-6 md:p-7 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-[#7C3AED]/10">
+            <Reveal key={item.name} delay={i * 100} className="h-full">
+            <div
+              onMouseMove={spotlightMove}
+              className="spotlight h-full bg-[#F8F7FF] rounded-3xl p-6 md:p-7 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-[#7C3AED]/10">
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <svg key={j} width="13" height="13" viewBox="0 0 24 24"
@@ -783,6 +861,7 @@ function Testimonials() {
                 </div>
               </div>
             </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -795,13 +874,12 @@ function Testimonials() {
 function CtaBanner() {
   const { t } = useLanguage();
   const c = t.ctaBanner;
-  const rev = useReveal();
 
   return (
     <section className="px-4 py-12 md:py-16 bg-[#F8F7FF]">
-      <div
+      <Reveal
+        variant="scale-in"
         className="max-w-4xl mx-auto rounded-3xl overflow-hidden relative bg-gradient-brand-deep"
-        ref={rev}
       >
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 blur-[80px] pointer-events-none"
           style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }} />
@@ -819,7 +897,7 @@ function CtaBanner() {
             </Link>
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -887,6 +965,7 @@ export default function HomePage() {
       <CtaBanner />
       <Footer />
       <StickyMobileCTA />
+      <RippleLayer />
     </>
   );
 }
