@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { ExecutorService } from './executor.service';
 import { CreateExecutorDto } from './dto/create-executor.dto';
 import { fileUrl, imageUploadOptions } from '../common/multer.config';
@@ -42,6 +43,7 @@ export class ExecutorController {
     return this.executor.getPlans(categoryId);
   }
 
+  @Public()
   @Get(':userId/public')
   getPublicProfile(@Param('userId') userId: string) {
     return this.executor.getPublicProfile(userId);
