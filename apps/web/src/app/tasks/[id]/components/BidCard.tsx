@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Bid {
@@ -56,24 +57,31 @@ export default function BidCard({ bid, isCustomer, taskStatus, onAccept, onDecli
   return (
     <div className={`rounded-2xl border p-4 ${bid.status === 'accepted' ? 'border-green-300 bg-green-50' : 'border-zinc-200 bg-white'}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center font-semibold text-zinc-600 shrink-0">
-            {bid.executor.user.fullName?.[0] ?? '?'}
-          </div>
-          <div>
-            <p className="font-semibold text-sm">
+        {/* Name + avatar link to the public master profile */}
+        <Link href={`/masters/${bid.executor.userId}`}
+          className="flex items-center gap-3 min-w-0 group rounded-xl -m-1 p-1">
+          {bid.executor.user.avatarUrl ? (
+            <img src={bid.executor.user.avatarUrl} alt=""
+              className="w-10 h-10 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-brand-tint flex items-center justify-center font-semibold text-brand-dark shrink-0" aria-hidden>
+              {bid.executor.user.fullName?.[0] ?? '?'}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="font-semibold text-sm truncate group-hover:text-brand transition-colors">
               {bid.executor.user.fullName ?? bc.masterDefault}
               {' '}
               <span className="text-base">{BADGE_LABELS[bid.executor.badge]}</span>
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 truncate">
               {bid.executor.reviewCount > 0
                 ? `★ ${bid.executor.rating.toFixed(1)} · ${bid.executor.reviewCount} ${bc.reviews}`
                 : bc.newMaster}
               {bid.executor.completedTaskCount > 0 && ` · ${bid.executor.completedTaskCount} ${bc.completed}`}
             </p>
           </div>
-        </div>
+        </Link>
 
         <div className="text-right shrink-0">
           <p className="font-bold text-zinc-900">{bid.priceUzs.toLocaleString()} {t.currency}</p>
@@ -97,12 +105,11 @@ export default function BidCard({ bid, isCustomer, taskStatus, onAccept, onDecli
         {canAct && (
           <>
             <button onClick={() => onAccept?.(bid.id)}
-              className="flex-1 py-2 rounded-xl text-white text-sm font-medium transition-colors"
-              style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}>
+              className="flex-1 min-h-[44px] py-2 rounded-xl bg-gradient-brand text-white text-sm font-bold btn-press">
               {bc.accept}
             </button>
             <button onClick={() => onDecline?.(bid.id)}
-              className="px-4 py-2 rounded-xl border border-zinc-200 text-sm font-medium hover:bg-zinc-50 transition-colors">
+              className="min-h-[44px] px-4 py-2 rounded-xl border border-zinc-200 text-sm font-medium hover:bg-zinc-50 transition-colors">
               {bc.decline}
             </button>
           </>
@@ -110,7 +117,7 @@ export default function BidCard({ bid, isCustomer, taskStatus, onAccept, onDecli
 
         {(bid.status === 'accepted' || bid.status === 'pending') && (
           <button onClick={() => onChat?.(bid.executor.userId)}
-            className="ml-auto px-3 py-2 rounded-xl border border-zinc-200 text-sm text-[#7C3AED] hover:bg-[#F5F3FF] transition-colors">
+            className="ml-auto min-h-[44px] px-3 py-2 rounded-xl border border-zinc-200 text-sm font-medium text-brand hover:bg-brand-tint transition-colors">
             💬 {bc.chat}
           </button>
         )}

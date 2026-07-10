@@ -42,20 +42,47 @@ export default function ExecutorDashboard() {
         </p>
 
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-3" aria-hidden>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border-2 border-zinc-100 p-4 animate-pulse">
-                <div className="flex gap-2 mb-3"><div className="h-5 bg-[#F5F3FF] rounded-full w-24" /></div>
-                <div className="h-5 bg-zinc-100 rounded w-3/4 mb-3" />
-                <div className="h-4 bg-zinc-50 rounded w-1/2" />
+              <div key={i} className="bg-white rounded-2xl border-2 border-zinc-100 p-4">
+                <div className="flex justify-between mb-3">
+                  <div className="skeleton h-5 w-24 rounded-full" />
+                  <div className="skeleton h-4 w-16" />
+                </div>
+                <div className="skeleton h-5 w-3/4 mb-3" />
+                <div className="skeleton h-4 w-1/2 mb-3" />
+                <div className="pt-3 border-t border-zinc-50 flex justify-between">
+                  <div className="skeleton h-4 w-28" />
+                  <div className="skeleton h-4 w-20" />
+                </div>
               </div>
             ))}
           </div>
         ) : tasks.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4">🔍</div>
+          <div className="text-center py-16 animate-fade-up">
+            {/* Empty-feed illustration: radar sweeping for incoming tasks */}
+            <svg width="140" height="120" viewBox="0 0 140 120" fill="none" className="mx-auto mb-5" aria-hidden>
+              <circle cx="70" cy="58" r="44" stroke="#DDD6FE" strokeWidth="2" strokeDasharray="4 6"/>
+              <circle cx="70" cy="58" r="30" stroke="#DDD6FE" strokeWidth="2"/>
+              <circle cx="70" cy="58" r="15" fill="#F5F3FF"/>
+              <path d="M70 58 L98 34" stroke="#7C3AED" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="70" cy="58" r="4" fill="#7C3AED"/>
+              <circle cx="98" cy="34" r="5" fill="#7C3AED" opacity="0.85"/>
+              <circle cx="44" cy="78" r="3.5" fill="#A78BFA" opacity="0.5"/>
+              <circle cx="94" cy="80" r="3" fill="#F59E0B" opacity="0.6"/>
+              <rect x="18" y="12" width="26" height="8" rx="4" fill="#EDE9FE"/>
+              <rect x="100" y="98" width="22" height="8" rx="4" fill="#EDE9FE"/>
+            </svg>
             <p className="font-bold text-[#0D0D1A] text-lg">{d.empty.title}</p>
-            <p className="text-sm text-zinc-400 mt-2 max-w-xs mx-auto">{d.empty.desc}</p>
+            <p className="text-sm text-zinc-500 mt-2 max-w-xs mx-auto">{d.empty.desc}</p>
+            {Object.keys(filters).length > 0 && (
+              <button
+                onClick={() => setFilters({})}
+                className="mt-5 px-5 py-2.5 rounded-xl text-sm font-bold text-[#5B21B6] bg-[#EDE9FE] hover:bg-[#DDD6FE] btn-press"
+              >
+                {t.lang === 'ru' ? 'Сбросить фильтры' : 'Filtrlarni tozalash'}
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

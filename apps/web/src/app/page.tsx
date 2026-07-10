@@ -122,8 +122,7 @@ function StickyMobileCTA() {
       <div className="px-4 pt-6 pb-4 pointer-events-auto" style={{ background: 'linear-gradient(to top, #0B0B18 55%, transparent)' }}>
         <Link
           href="/post-task"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-white text-base glow-violet active:scale-[0.98] transition-transform"
-          style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-white text-base glow-violet btn-press bg-gradient-brand"
         >
           {t.nav.postTask} →
         </Link>
@@ -306,8 +305,7 @@ function Navbar() {
           )}
           <Link
             href="/post-task"
-            className="hidden sm:block text-sm font-bold px-4 py-2 rounded-full text-white hover:opacity-90 active:scale-95 transition-all"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}
+            className="hidden sm:block text-sm font-bold px-4 py-2 rounded-full text-white btn-press bg-gradient-brand"
           >
             {t.nav.postTask}
           </Link>
@@ -315,8 +313,9 @@ function Navbar() {
           {/* Hamburger */}
           <button
             onClick={() => setMobileOpen(o => !o)}
-            className="md:hidden relative flex items-center justify-center w-9 h-9 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            className="md:hidden relative flex items-center justify-center w-11 h-11 -my-1 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all"
             aria-label="Menu"
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round">
@@ -361,8 +360,7 @@ function Navbar() {
               )}
               <div className="border-t border-white/8 mt-2 pt-2 grid grid-cols-2 gap-2">
                 <Link href="/post-task" onClick={() => setMobileOpen(false)}
-                  className="text-center py-3 rounded-xl font-bold text-white text-sm"
-                  style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}
+                  className="text-center py-3 rounded-xl font-bold text-white text-sm bg-gradient-brand"
                 >
                   {t.nav.postTask}
                 </Link>
@@ -382,8 +380,25 @@ function Navbar() {
 
 /* ─── Hero ───────────────────────────────────────────────────────────────── */
 
+const TRUST_ICONS = [
+  // Shield-lock: escrow payment
+  <svg key="shield" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <path d="M9.5 11.5l2 2 3.5-4"/>
+  </svg>,
+  // Badge-check: verified masters
+  <svg key="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>,
+  // Star: honest ratings
+  <svg key="star" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>,
+];
+
 function Hero() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <section className="hero-bg relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20 pb-16 overflow-hidden">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-[120px] pointer-events-none"
@@ -417,8 +432,7 @@ function Hero() {
       <div className="relative mt-8 flex flex-col sm:flex-row gap-3 items-center w-full max-w-sm sm:max-w-none sm:w-auto">
         <Link
           href="/post-task"
-          className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] glow-violet"
-          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}
+          className="group w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white btn-press glow-violet bg-gradient-brand"
         >
           {t.hero.ctaTask}
           <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -441,18 +455,30 @@ function Hero() {
             <path d="M3 2l5 3-5 3V2z"/>
           </svg>
         </span>
-        О проекте
+        {lang === 'ru' ? 'О проекте' : 'Loyiha haqida'}
       </Link>
 
-      {/* Trust signals */}
-      <div className="relative mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-white/30">
-        {t.hero.trust.map((item, i) => (
-          <span key={i} className="flex items-center gap-1.5">{item}</span>
+      {/* Trust indicators — escrow, verification, honest ratings */}
+      <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full max-w-sm sm:max-w-3xl">
+        {t.hero.trustBadges.map((item, i) => (
+          <div
+            key={item.title}
+            className={`glass rounded-2xl px-4 py-3 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-2 text-left animate-fade-up d-${i + 2}`}
+          >
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-emerald-400"
+              style={{ background: 'rgba(52,211,153,0.12)' }}>
+              {TRUST_ICONS[i]}
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-white/90">{item.title}</span>
+              <span className="block text-xs text-white/45 mt-0.5">{item.desc}</span>
+            </span>
+          </div>
         ))}
       </div>
 
-      {/* Scroll hint */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/20">
+      {/* Scroll hint — hidden on short/mobile viewports where trust badges reach the fold */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-1 text-white/20">
         <span className="text-[10px] tracking-widest uppercase">{t.hero.scrollHint}</span>
         <div className="w-px h-6 bg-gradient-to-b from-white/15 to-transparent mt-1" />
       </div>
@@ -485,7 +511,7 @@ function StatsBar() {
         {items.map((item, i) => (
           <div key={item.label}
             className={`flex flex-col items-center py-5 ${i % 2 === 0 && i < 3 ? 'border-r border-white/5' : ''} ${i < 2 ? 'md:border-r md:border-white/5' : ''}`}>
-            <span ref={item.spanRef} className="text-2xl sm:text-3xl font-extrabold text-white font-jakarta tabular-nums">
+            <span ref={item.spanRef} className="text-2xl sm:text-3xl font-extrabold text-white font-display tabular-nums">
               {item.display}
             </span>
             <span className="text-xs sm:text-sm text-white/35 mt-1 text-center px-2">{item.label}</span>
@@ -535,11 +561,10 @@ function HowItWorks() {
               )}
               <div className="bg-[#F8F7FF] rounded-3xl p-6 md:p-7 h-full group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300 border border-transparent group-hover:border-[#7C3AED]/10">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center text-white flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #7C3AED, #5B21B6)' }}>
+                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center text-white flex-shrink-0 bg-gradient-brand">
                     {STEP_ICONS[i]}
                   </div>
-                  <span className="text-4xl font-extrabold text-[#7C3AED]/10 font-jakarta leading-none">{s.n}</span>
+                  <span className="text-4xl font-extrabold text-[#7C3AED]/10 font-display leading-none">{s.n}</span>
                 </div>
                 <h3 className="text-base md:text-lg font-bold text-[#0D0D1A] mb-2">{s.title}</h3>
                 <p className="text-[#71717A] leading-relaxed text-sm">{s.desc}</p>
@@ -699,8 +724,7 @@ function ForMasters() {
         <div className="text-center">
           <Link
             href="/onboarding/executor"
-            className="inline-flex items-center gap-2 px-8 md:px-10 py-4 rounded-2xl text-base font-bold text-[#0B0B18] transition-all hover:scale-[1.02] active:scale-[0.98] glow-gold"
-            style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}
+            className="inline-flex items-center gap-2 px-8 md:px-10 py-4 rounded-2xl text-base font-bold text-[#0B0B18] btn-press glow-gold bg-gradient-gold"
           >
             {m.cta} →
           </Link>
@@ -776,8 +800,7 @@ function CtaBanner() {
   return (
     <section className="px-4 py-12 md:py-16 bg-[#F8F7FF]">
       <div
-        className="max-w-4xl mx-auto rounded-3xl overflow-hidden relative"
-        style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 55%, #1A1A3A 100%)' }}
+        className="max-w-4xl mx-auto rounded-3xl overflow-hidden relative bg-gradient-brand-deep"
         ref={rev}
       >
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 blur-[80px] pointer-events-none"
@@ -787,8 +810,7 @@ function CtaBanner() {
           <p className="mt-3 text-sm md:text-base text-white/50 max-w-md mx-auto">{c.subtitle}</p>
           <div className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/post-task"
-              className="px-8 md:px-10 py-4 rounded-2xl font-bold text-[#0B0B18] text-base hover:scale-[1.02] transition-transform glow-gold active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
+              className="px-8 md:px-10 py-4 rounded-2xl font-bold text-[#0B0B18] text-base btn-press glow-gold bg-gradient-gold">
               {c.ctaTask}
             </Link>
             <Link href="/onboarding/executor"

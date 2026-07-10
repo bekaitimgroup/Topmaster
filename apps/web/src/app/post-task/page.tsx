@@ -78,7 +78,7 @@ const INITIAL: FormState = {
 
 export default function PostTaskPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { checked } = useRequireAuth();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL);
@@ -157,7 +157,8 @@ export default function PostTaskPage() {
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => step === 1 ? router.back() : back()}
-              className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm"
+              aria-label={lang === 'ru' ? 'Назад' : 'Orqaga'}
+              className="w-11 h-11 -my-1.5 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm"
             >
               ←
             </button>
@@ -175,6 +176,8 @@ export default function PostTaskPage() {
       </header>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-8">
+        {/* key={step} re-mounts the wrapper so each step slides in fresh */}
+        <div key={step} className="animate-fade-up">
         {step === 1 && (
           <Step1Category
             value={{
@@ -234,6 +237,7 @@ export default function PostTaskPage() {
             error={error}
           />
         )}
+        </div>
       </main>
     </div>
   );

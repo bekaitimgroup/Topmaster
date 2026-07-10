@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { Manrope, Inter } from "next/font/google";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import HtmlLang from "@/components/HtmlLang";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
-  weight: ["400", "500", "600", "700", "800"],
+// Display font. Manrope ships full Cyrillic — Plus Jakarta Sans does not,
+// which made every Russian heading silently fall back to system-ui.
+const manrope = Manrope({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-manrope",
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -21,6 +23,7 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0B0B18',
 };
 
 export const metadata: Metadata = {
@@ -37,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz" className={`${jakarta.variable} ${inter.variable} antialiased`}>
+    <html lang="uz" className={`${manrope.variable} ${inter.variable} antialiased`}>
       <body className="min-h-screen bg-white text-[#0D0D1A] font-inter">
         <LanguageProvider>
           <HtmlLang />

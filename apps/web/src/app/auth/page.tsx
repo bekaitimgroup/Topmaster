@@ -10,7 +10,7 @@ import Logo from '@/components/Logo';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const TG_BOT_NAME      = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
 
-const BTN   = 'w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed';
+const BTN   = 'w-full py-3.5 rounded-2xl font-bold text-sm btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none';
 const INPUT = 'w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 py-3.5 text-sm focus:outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all';
 
 function Divider({ text }: { text: string }) {
@@ -20,6 +20,28 @@ function Divider({ text }: { text: string }) {
       <span className="text-xs text-zinc-400">{text}</span>
       <div className="flex-1 h-px bg-zinc-100" />
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      className="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin align-middle"
+      aria-hidden
+    />
+  );
+}
+
+/* Error banner: icon + text, never color alone (WCAG 1.4.1).
+   error-strong on error-tint = 5.9:1 contrast. */
+function ErrorBanner({ text }: { text: string }) {
+  return (
+    <p role="alert" className="flex items-start gap-2 text-xs font-medium text-error-strong bg-error-tint rounded-xl px-3 py-2.5 animate-fade-in">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="flex-shrink-0 mt-px">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+      </svg>
+      {text}
+    </p>
   );
 }
 
@@ -122,25 +144,31 @@ function AuthForm() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#F8F7FF] flex flex-col overflow-x-hidden">
+    <div className="relative min-h-screen bg-canvas flex flex-col overflow-x-hidden">
+      {/* Ambient brand glow — subtle, not decorative noise */}
+      <div
+        className="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[560px] h-[420px] rounded-full opacity-[0.07] blur-[90px] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #7C3AED, transparent)' }}
+      />
+
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+      <div className="relative flex items-center justify-between px-4 pt-4 pb-2">
         <div />
         <LanguageSwitcher />
       </div>
 
       {/* Main content — flex-1 so it vertically centers in remaining space */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+      <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-8">
         {/* Logo + subtitle */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 animate-fade-up">
           <Logo size="lg" className="justify-center mb-3" />
           <p className="text-sm text-zinc-500">
-            {isRu ? 'Войдите, чтобы продолжить' : 'Davom etish uchun kiring'}
+            {isRu ? 'Войдите — и мастера сами найдут вас' : 'Kiring — ustalar sizni o\'zlari topadi'}
           </p>
         </div>
 
         {/* Card */}
-        <div className="w-full max-w-sm bg-white rounded-3xl shadow-sm border border-zinc-100 p-5 space-y-3">
+        <div className="w-full max-w-sm bg-white rounded-3xl shadow-card border border-zinc-100 p-5 space-y-3 animate-scale-in d-1">
 
           {/* Google */}
           {GOOGLE_CLIENT_ID ? (
@@ -201,14 +229,17 @@ function AuthForm() {
                   autoFocus
                 />
               </div>
-              {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+              {error && <ErrorBanner text={error} />}
               <button
                 onClick={sendOtp}
                 disabled={loading || phone.length < 13}
-                className={BTN + ' text-white'}
-                style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}
+                aria-busy={loading}
+                className={BTN + ' text-white bg-gradient-brand flex items-center justify-center gap-2'}
               >
-                {loading ? '...' : (isRu ? 'Получить SMS-код' : 'SMS-kod olish')}
+                {loading && <Spinner />}
+                {loading
+                  ? (isRu ? 'Отправляем код…' : 'Kod yuborilmoqda…')
+                  : (isRu ? 'Получить SMS-код' : 'SMS-kod olish')}
               </button>
             </>
           ) : (
@@ -236,25 +267,31 @@ function AuthForm() {
                   autoComplete="one-time-code"
                 />
               </div>
-              {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+              {error && <ErrorBanner text={error} />}
               <button
                 onClick={verifyCode}
                 disabled={loading || code.length !== 6}
-                className={BTN + ' text-white'}
-                style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)' }}
+                aria-busy={loading}
+                className={BTN + ' text-white bg-gradient-brand flex items-center justify-center gap-2'}
               >
-                {loading ? '...' : (isRu ? 'Войти' : 'Kirish')}
+                {loading && <Spinner />}
+                {loading
+                  ? (isRu ? 'Проверяем…' : 'Tekshirilmoqda…')
+                  : (isRu ? 'Войти' : 'Kirish')}
               </button>
               <div className="flex justify-between items-center pt-1">
+                {/* p-3 -m-2 = ~44px touch targets on text links */}
                 <button onClick={() => { setStep('phone'); setCode(''); setError(''); }}
-                  className="text-xs text-zinc-500 hover:text-[#7C3AED] transition-colors">
+                  className="text-xs text-zinc-500 hover:text-[#7C3AED] transition-colors p-3 -m-2 rounded-lg">
                   ← {isRu ? 'Изменить' : "O'zgartirish"}
                 </button>
                 {cooldown > 0 ? (
-                  <span className="text-xs text-zinc-400">{cooldown}s</span>
+                  <span className="text-xs text-zinc-400 tabular-nums">
+                    {isRu ? `Повторно через ${cooldown} с` : `${cooldown} soniyadan keyin qayta`}
+                  </span>
                 ) : (
                   <button onClick={() => { sendOtp(); setCode(''); }}
-                    className="text-xs text-[#7C3AED] font-medium">
+                    className="text-xs text-[#7C3AED] font-semibold p-3 -m-2 rounded-lg">
                     {isRu ? 'Отправить снова' : 'Qayta yuborish'}
                   </button>
                 )}

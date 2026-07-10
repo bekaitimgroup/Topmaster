@@ -72,29 +72,45 @@ export default function ExecutorOnboardingPage() {
     }
   }
 
+  const stepLabel = t.onboarding.steps[step - 1];
+  const encouragement = t.onboarding.encouragements[step - 1];
+
   return (
-    <div className="min-h-screen bg-[#F8F7FF] flex flex-col">
-      <header className="bg-white border-b border-zinc-100 px-4 py-4 sticky top-0 z-10">
+    <div className="min-h-screen bg-canvas flex flex-col">
+      <header className="bg-surface border-b border-zinc-100 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-3">
             <button onClick={() => step === 1 ? router.back() : back()}
-              className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm">
+              aria-label={t.common.back}
+              className="w-11 h-11 -my-1 shrink-0 rounded-full border border-zinc-200 flex items-center justify-center text-muted hover:text-brand hover:border-brand transition-colors">
               ←
             </button>
-            <span className="flex-1 flex items-center justify-center gap-2">
+            <span className="flex-1 flex items-center justify-center gap-2 min-w-0">
               <Logo size="sm" />
-              <span className="text-zinc-400 text-sm">— {t.onboarding.becomeMaster}</span>
+              <span className="text-muted text-sm truncate">— {t.onboarding.becomeMaster}</span>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <LanguageSwitcher />
-              <span className="text-xs font-semibold text-zinc-400">{step}/5</span>
             </div>
           </div>
-          <div className="flex gap-1.5">
+
+          {/* Progress: named step + count + segmented bar */}
+          <div className="flex items-baseline justify-between mb-2">
+            <p className="text-sm font-bold text-ink">{stepLabel}</p>
+            <p className="text-xs font-semibold text-muted tabular-nums">{step}/5</p>
+          </div>
+          <div
+            className="flex gap-1.5"
+            role="progressbar"
+            aria-valuemin={1}
+            aria-valuemax={5}
+            aria-valuenow={step}
+            aria-label={`${stepLabel} — ${step}/5`}
+          >
             {t.onboarding.steps.map((_, i) => (
               <div
                 key={i}
-                className="h-1 flex-1 rounded-full transition-all duration-500"
+                className="h-1.5 flex-1 rounded-full transition-all duration-500"
                 style={{
                   background: i + 1 < step ? 'linear-gradient(90deg, #7C3AED, #5B21B6)' :
                               i + 1 === step ? 'linear-gradient(90deg, #7C3AED, #A78BFA)' : '#E4E4E7',
@@ -102,6 +118,9 @@ export default function ExecutorOnboardingPage() {
               />
             ))}
           </div>
+          <p className="text-xs text-brand-dark font-medium mt-2" aria-live="polite">
+            {encouragement}
+          </p>
         </div>
       </header>
 

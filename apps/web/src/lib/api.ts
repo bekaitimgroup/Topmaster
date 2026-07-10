@@ -123,5 +123,6 @@ export interface Task {
   paymentMethod: string;
   startAt: string;
   category: Category;
+  bidCount: number;
   createdAt: string;
 }

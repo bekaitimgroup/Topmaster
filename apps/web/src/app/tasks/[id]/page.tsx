@@ -7,6 +7,7 @@ import Chat from './components/Chat';
 import ReviewForm from './components/ReviewForm';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SuccessBurst from '@/components/SuccessBurst';
 
 interface Task {
   id: string;
@@ -66,6 +67,19 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   const [payError, setPayError] = useState('');
   const [completeLoading, setCompleteLoading] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [justPosted, setJustPosted] = useState(false);
+
+  // Celebrate freshly posted tasks (?new=1 from the post-task wizard),
+  // then clean the URL so refresh doesn't re-celebrate.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('new') === '1') {
+      setJustPosted(true);
+      params.delete('new');
+      const qs = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }, []);
 
   const API = process.env.NEXT_PUBLIC_API_URL;
   const withCreds: RequestInit = { credentials: 'include' };
@@ -75,6 +89,13 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       fetch(`${API}/api/tasks/${id}`, withCreds),
       fetch(`${API}/api/auth/me`, withCreds),
     ]);
+    // A non-ok response returns an error object, not a Task — it is truthy,
+    // so it would pass the `!task` guard and crash at task.customer.id.
+    if (!taskRes.ok) {
+      setTask(null);
+      setLoading(false);
+      return;
+    }
     const taskData = await taskRes.json();
     const meData = await meRes.json();
     setTask(taskData);
@@ -96,9 +117,12 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     if (!currentUserId) return;
     const res = await fetch(`${API}/api/bids/task/${id}`, withCreds);
     const data = await res.json();
-    setBids(Array.isArray(data) ? data : []);
+    // Guard once, use the guarded value everywhere — raw `data` may be an
+    // error object on non-ok responses, and .find() on it throws.
+    const list: Bid[] = Array.isArray(data) ? data : [];
+    setBids(list);
     if (userRole === 'executor') {
-      setMyBid(data.find((b: Bid) => b.executor?.userId === currentUserId) ?? null);
+      setMyBid(list.find((b) => b.executor?.userId === currentUserId) ?? null);
     }
   }
 
@@ -171,11 +195,31 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F7FF] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-zinc-400">{t.taskDetail.loading}</p>
-        </div>
+      <div className="min-h-screen bg-[#F8F7FF]">
+        <header className="bg-white border-b border-zinc-100 px-4 py-3">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <div className="skeleton w-8 h-8 rounded-full" />
+            <div className="skeleton h-5 w-48" />
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-5 space-y-4" aria-label={t.taskDetail.loading} aria-busy>
+          <div className="bg-white rounded-2xl border-2 border-zinc-100 p-5 space-y-4">
+            <div className="skeleton h-6 w-28 rounded-full" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><div className="skeleton h-3 w-16" /><div className="skeleton h-4 w-24" /></div>
+              <div className="space-y-1.5"><div className="skeleton h-3 w-16" /><div className="skeleton h-4 w-28" /></div>
+              <div className="space-y-1.5"><div className="skeleton h-3 w-16" /><div className="skeleton h-4 w-32" /></div>
+              <div className="space-y-1.5"><div className="skeleton h-3 w-16" /><div className="skeleton h-4 w-20" /></div>
+            </div>
+            <div className="skeleton h-4 w-full" />
+            <div className="skeleton h-4 w-2/3" />
+          </div>
+          <div className="bg-white rounded-2xl border-2 border-zinc-100 p-5 space-y-3">
+            <div className="skeleton h-5 w-40" />
+            <div className="skeleton h-16 w-full rounded-xl" />
+            <div className="skeleton h-16 w-full rounded-xl" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -201,7 +245,8 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm"
+            aria-label={lang === 'ru' ? 'Назад' : 'Orqaga'}
+            className="w-11 h-11 -my-1.5 shrink-0 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED] transition-colors text-sm"
           >
             ←
           </button>
@@ -216,6 +261,21 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-5 space-y-4 pb-8">
+        {/* Celebration — task just posted from the wizard */}
+        {justPosted && (
+          <div className="bg-white rounded-2xl border-2 border-emerald-100 p-6 flex flex-col items-center text-center animate-scale-in">
+            <SuccessBurst
+              size={64}
+              label={lang === 'ru' ? 'Заявка опубликована!' : 'Buyurtma joylandi!'}
+            />
+            <p className="text-sm text-zinc-500 mt-1 max-w-xs">
+              {lang === 'ru'
+                ? 'Мастера уже видят её. Первые предложения обычно приходят в течение 2 часов — мы покажем их здесь.'
+                : "Ustalar buyurtmangizni ko'rmoqda. Odatda birinchi takliflar 2 soat ichida keladi — ularni shu yerda ko'rasiz."}
+            </p>
+          </div>
+        )}
+
         {/* Task info */}
         <div className="bg-white rounded-2xl border-2 border-zinc-100 p-5 space-y-4">
           <span className="inline-block text-xs font-bold text-[#5B21B6] bg-[#F5F3FF] px-2.5 py-1 rounded-full">
@@ -304,9 +364,10 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
         {/* Active chat (if opened) */}
         {activeChatPartnerId && (
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-medium text-zinc-700">{td.chat}</p>
-              <button onClick={() => setActiveChatPartnerId(null)} className="text-xs text-zinc-400 hover:text-zinc-600">
+              <button onClick={() => setActiveChatPartnerId(null)}
+                className="min-h-[44px] px-3 -mr-3 text-xs font-medium text-muted hover:text-ink transition-colors">
                 {td.chatClose}
               </button>
             </div>
@@ -314,6 +375,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
               taskId={task.id}
               partnerId={activeChatPartnerId}
               currentUserId={currentUserId!}
+              safeDeal={task.paymentMethod === 'safe_deal'}
             />
           </div>
         )}

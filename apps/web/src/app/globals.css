@@ -1,27 +1,66 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOPMASTER DESIGN TOKENS
+   Single source of truth. Never use a raw hex in a component — if the value
+   you need is missing here, add a token, don't inline a literal.
+   Mirrored in mobile: topmaster-mobile/lib/theme.ts
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @theme {
-  /* Brand */
-  --color-brand:        #7C3AED;
-  --color-brand-light:  #A78BFA;
-  --color-brand-dark:   #5B21B6;
-  --color-gold:         #F59E0B;
-  --color-gold-light:   #FCD34D;
+  /* ── Brand: violet ─────────────────────────────────────────────────────── */
+  --color-brand:         #7C3AED;  /* primary actions */
+  --color-brand-light:   #A78BFA;  /* accents on dark surfaces */
+  --color-brand-dark:    #5B21B6;  /* gradient stop, hover */
+  --color-brand-deeper:  #4C1D95;  /* deep gradient stop */
+  --color-brand-tint:    #F5F3FF;  /* chip / badge backgrounds */
+  --color-brand-border:  #DDD6FE;  /* tinted borders */
 
-  /* Dark surfaces */
-  --color-dark:         #0B0B18;
-  --color-dark-2:       #13132A;
-  --color-dark-3:       #1A1A3A;
+  /* ── Brand: gold (masters, earnings, celebration) ──────────────────────── */
+  --color-gold:          #F59E0B;
+  --color-gold-dark:     #D97706;
+  --color-gold-light:    #FCD34D;
+  --color-gold-tint:     #FEF3C7;
 
-  /* Neutral */
-  --color-off-white:    #F8F7FF;
-  --color-ink:          #0D0D1A;
-  --color-muted:        #71717A;
+  /* ── Semantic ──────────────────────────────────────────────────────────── */
+  /* -strong variants pass 4.5:1 on their tint backgrounds — use for text.   */
+  --color-success:        #16A34A;
+  --color-success-strong: #15803D;
+  --color-success-tint:   #DCFCE7;
+  --color-warning:        #D97706;
+  --color-warning-strong: #B45309;
+  --color-warning-tint:   #FEF3C7;
+  --color-error:          #DC2626;
+  --color-error-strong:   #B91C1C;
+  --color-error-tint:     #FEE2E2;
+  --color-info:           #0284C7;
+  --color-info-strong:    #0369A1;
+  --color-info-tint:      #E0F2FE;
 
-  /* Fonts */
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  --color-dark:          #0B0B18;  /* hero / footer night surface */
+  --color-dark-2:        #13132A;
+  --color-dark-3:        #1A1A3A;
+  --color-canvas:        #F8F7FF;  /* app background (violet-tinted off-white) */
+  --color-off-white:     #F8F7FF;  /* deprecated alias of canvas */
+  --color-surface:       #FFFFFF;  /* cards */
+  --color-ink:           #0D0D1A;  /* primary text — 19.2:1 on white */
+  --color-muted:         #71717A;  /* secondary text — 4.75:1 on white */
+  --color-faint:         #A1A1AA;  /* decorative only, fails 4.5:1 — never body text */
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  /* Display: Manrope — full Cyrillic + Latin (Uzbek), geometric, premium.
+     Body: Inter — the workhorse, superb Cyrillic hinting on low-DPI Androids. */
+  --font-display: var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif;
   --font-inter:   'Inter', system-ui, sans-serif;
-  --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-jakarta: var(--font-manrope), 'Manrope', 'Inter', system-ui, sans-serif; /* deprecated → use font-display */
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);  /* playful overshoot */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);       /* premium settle */
 }
+
+/* ═══ Base ═══════════════════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -32,15 +71,47 @@ html, body {
 
 body {
   font-family: var(--font-inter);
-  color: #0D0D1A;
+  color: var(--color-ink);
   background: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4 { font-family: var(--font-jakarta); }
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
 
-/* Gradient text */
+/* Visible keyboard focus everywhere — WCAG 2.4.7. Do not remove. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* On night surfaces violet fails 3:1 against #0B0B18 — switch to gold-light. */
+.hero-bg :focus-visible,
+.bg-dark :focus-visible,
+footer :focus-visible {
+  outline-color: var(--color-gold-light);
+}
+
+::selection {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+/* ═══ Gradients (the only sanctioned brand gradients) ════════════════════ */
+
+.bg-gradient-brand {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+}
+.bg-gradient-brand-deep {
+  background: linear-gradient(135deg, #7C3AED 0%, #4C1D95 55%, #1A1A3A 100%);
+}
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #A78BFA 0%, #F59E0B 100%);
   -webkit-background-clip: text;
@@ -66,7 +137,27 @@ h1, h2, h3, h4 { font-family: var(--font-jakarta); }
   backdrop-filter: blur(14px);
 }
 
-/* Entrance animations */
+/* Elevated card shadow — violet-tinted, softer than raw black */
+.shadow-card       { box-shadow: 0 1px 2px rgba(13,13,26,0.04), 0 4px 16px rgba(124,58,237,0.06); }
+.shadow-card-hover { box-shadow: 0 2px 4px rgba(13,13,26,0.05), 0 12px 32px rgba(124,58,237,0.12); }
+
+/* ═══ Micro-interactions ═════════════════════════════════════════════════ */
+
+/* Attach to every button/link that performs an action. */
+.btn-press {
+  transition: transform 0.15s var(--ease-spring), box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.btn-press:hover  { transform: translateY(-1px); }
+.btn-press:active { transform: scale(0.97); }
+
+/* Card lift on hover */
+.card-lift {
+  transition: transform 0.25s var(--ease-out-expo), box-shadow 0.25s var(--ease-out-expo), border-color 0.2s ease;
+}
+.card-lift:hover { transform: translateY(-2px); }
+
+/* ═══ Entrance animations ════════════════════════════════════════════════ */
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -75,21 +166,91 @@ h1, h2, h3, h4 { font-family: var(--font-jakarta); }
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
 
-.animate-fade-up  { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards; }
-.animate-fade-in  { animation: fadeIn 0.5s ease forwards; }
+.animate-fade-up  { animation: fadeUp 0.55s var(--ease-out-expo) both; }
+.animate-fade-in  { animation: fadeIn 0.5s ease both; }
+.animate-scale-in { animation: scaleIn 0.45s var(--ease-out-expo) both; }
 
-/* Section reveal (JS-driven) */
+/* Stagger helpers — pair with any animate-* class */
+.d-1 { animation-delay: 60ms; }
+.d-2 { animation-delay: 120ms; }
+.d-3 { animation-delay: 180ms; }
+.d-4 { animation-delay: 240ms; }
+.d-5 { animation-delay: 300ms; }
+.d-6 { animation-delay: 360ms; }
+
+/* Section reveal (JS-driven via useReveal) */
 .reveal {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo);
 }
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
+/* ═══ Loading: shimmer skeletons (never bare spinners for content) ═══════ */
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #EDEBF6;
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+/* ═══ Success celebration ════════════════════════════════════════════════ */
+
+@keyframes successPop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes successRing {
+  0%   { transform: scale(0.6); opacity: 0.6; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(280px) rotate(540deg) scale(0.7); opacity: 0; }
+}
+.success-pop  { animation: successPop 0.5s var(--ease-spring) both; }
+.success-ring { animation: successRing 0.9s var(--ease-out-expo) both; }
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confettiFall 1.3s var(--ease-out-expo) both;
+}
+
+/* ═══ Motion accessibility ═══════════════════════════════════════════════ */
+
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .animate-fade-in, .animate-scale-in,
+  .success-pop, .success-ring, .confetti-piece,
+  .skeleton::after {
+    animation: none !important;
+  }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .btn-press, .card-lift { transition: none; }
 }
