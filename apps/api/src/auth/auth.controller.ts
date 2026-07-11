@@ -75,9 +75,10 @@ export class AuthController {
     try {
       const result = await this.auth.loginWithTelegram(req.query as TelegramAuthDto);
       const params = new URLSearchParams({ accessToken: result.accessToken, isNewUser: String(result.isNewUser) });
-      return res.redirect(`topmaster://auth/telegram?${params.toString()}`);
+      // https App Link — Android opens the app automatically without "Continue" dialog
+      return res.redirect(`https://topmaster.uz/auth/telegram?${params.toString()}`);
     } catch {
-      return res.redirect('topmaster://auth/telegram?error=auth_failed');
+      return res.redirect('https://topmaster.uz/auth/telegram?error=auth_failed');
     }
   }
 
