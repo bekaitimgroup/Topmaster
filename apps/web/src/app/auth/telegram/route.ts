@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Telegram Login Widget redirects here after the user authorizes.
-// We relay all query params to the NestJS API which validates the data
-// and redirects the mobile app to its deep link.
+// Relay all TG auth params to the NestJS API (which validates + issues JWT)
+// then redirects to the mobile deep link topmaster://auth/telegram
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams.toString();
   return NextResponse.redirect(
