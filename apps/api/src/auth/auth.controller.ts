@@ -65,16 +65,32 @@ export class AuthController {
     return { accessToken: result.accessToken, isNewUser: result.isNewUser };
   }
 
+  // Telegram Login Widget redirects to GET /auth/telegram after the user authorizes.
+  // Validates the payload, then redirects mobile apps to their deep link.
+  @Get('telegram')
+  async telegramWidgetCallback(
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    const appRedirect = (req.query.app_redirect as string) ?? 'topmaster://auth/telegram';
+    try {
+      const { app_redirect, ...tgData } = req.query;
+      const result = await this.auth.loginWithTelegram(tgData as TelegramAuthDto);
+      const params = new URLSearchParams({ accessToken: result.accessToken, isNewUser: String(result.isNewUser) });
+      return res.redirect(`${appRedirect}?${params.toString()}`);
+    } catch {
+      return res.redirect(`${appRedirect}?error=auth_failed`);
+    }
+  }
+
   // Mobile: Telegram OAuth redirect — validates data, redirects to app deep link
   @Get('telegram/mobile-redirect')
   async telegramMobileRedirect(
     @Request() req: any,
     @Res() res: Response,
   ) {
-    // app_redirect is the mobile app's deep link URI (e.g. exp+topmaster://auth/telegram in dev)
     const appRedirect = (req.query.app_redirect as string) ?? 'topmaster://auth/telegram';
     try {
-      // Strip app_redirect before passing to loginWithTelegram — it's not part of TG's signed payload
       const { app_redirect, ...tgData } = req.query;
       const result = await this.auth.loginWithTelegram(tgData as TelegramAuthDto);
       const params = new URLSearchParams({ accessToken: result.accessToken, isNewUser: String(result.isNewUser) });
