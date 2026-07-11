@@ -71,13 +71,16 @@ export class AuthController {
     @Request() req: any,
     @Res() res: Response,
   ) {
+    // app_redirect is the mobile app's deep link URI (e.g. exp+topmaster://auth/telegram in dev)
+    const appRedirect = (req.query.app_redirect as string) ?? 'topmaster://auth/telegram';
     try {
-      const dto = req.query as TelegramAuthDto;
-      const result = await this.auth.loginWithTelegram(dto);
+      // Strip app_redirect before passing to loginWithTelegram — it's not part of TG's signed payload
+      const { app_redirect, ...tgData } = req.query;
+      const result = await this.auth.loginWithTelegram(tgData as TelegramAuthDto);
       const params = new URLSearchParams({ accessToken: result.accessToken, isNewUser: String(result.isNewUser) });
-      return res.redirect(`topmaster://auth/telegram?${params.toString()}`);
+      return res.redirect(`${appRedirect}?${params.toString()}`);
     } catch {
-      return res.redirect('topmaster://auth/telegram?error=auth_failed');
+      return res.redirect(`${appRedirect}?error=auth_failed`);
     }
   }
 
