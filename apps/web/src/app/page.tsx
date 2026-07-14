@@ -619,6 +619,65 @@ const STEP_ICONS = [
   </svg>,
 ];
 
+/* ─── Video Section ──────────────────────────────────────────────────────── */
+
+const VIDEO_ID = 'Qwgkonu9CTg';
+
+function VideoSection() {
+  const { lang } = useLanguage();
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <section className="py-16 md:py-20 px-4 bg-[#F8F7FF]">
+      <div className="max-w-4xl mx-auto">
+        <Reveal className="text-center mb-8">
+          <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#7C3AED] mb-3">
+            {lang === 'uz' ? 'Qanday ishlaydi' : 'Как это работает'}
+          </span>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0D0D1A]">
+            {lang === 'uz' ? 'Bir daqiqada ko\'ring' : 'Посмотрите за минуту'}
+          </h2>
+        </Reveal>
+
+        <Reveal variant="scale-in">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-[#7C3AED]/20 aspect-video bg-[#0D0D1A]">
+            {!playing ? (
+              /* Thumbnail + play button */
+              <button
+                onClick={() => setPlaying(true)}
+                className="absolute inset-0 w-full h-full group flex items-center justify-center"
+                aria-label="Play video"
+              >
+                {/* YouTube thumbnail */}
+                <img
+                  src={`https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`}
+                  alt="Topmaster video"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-300" />
+                {/* Play button */}
+                <div className="relative z-10 w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/95 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-[#7C3AED] ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </button>
+            ) : (
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 function HowItWorks() {
   const { t } = useLanguage();
   const h = t.how;
@@ -966,6 +1025,7 @@ export default function HomePage() {
       <Navbar />
       <Hero />
       <StatsBar />
+      <VideoSection />
       <HowItWorks />
       <Categories />
       <ForMasters />
