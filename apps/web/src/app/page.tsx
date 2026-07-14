@@ -23,6 +23,10 @@ function useCountUp(end: number, decimals = 0) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setVal(end); return;
     }
+    // Fallback: always show final value after 2.5s even if IO never fires
+    const fallback = setTimeout(() => {
+      if (!done.current) { done.current = true; setVal(end); }
+    }, 2500);
     let rafId = 0;
     const run = () => {
       if (done.current) return;
@@ -49,7 +53,7 @@ function useCountUp(end: number, decimals = 0) {
       run();
     }, { threshold: 0.1 });
     obs.observe(el);
-    return () => { obs.disconnect(); cancelAnimationFrame(rafId); };
+    return () => { obs.disconnect(); cancelAnimationFrame(rafId); clearTimeout(fallback); };
   }, [end, decimals]);
   return { val, ref };
 }
@@ -635,7 +639,7 @@ function VideoSection() {
             {lang === 'uz' ? 'Qanday ishlaydi' : 'Как это работает'}
           </span>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0D0D1A]">
-            {lang === 'uz' ? 'Bir daqiqada ko\'ring' : 'Посмотрите за минуту'}
+            {lang === 'uz' ? 'Topmaster 33 soniyada' : 'Topmaster за 33 секунды'}
           </h2>
         </Reveal>
 
